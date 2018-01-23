@@ -1,0 +1,56 @@
+{
+	"name": "electron-timber",
+	"version": "0.0.0",
+	"description": "Pretty logger for Electron apps",
+	"license": "MIT",
+	"repository": "sindresorhus/electron-timber",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"scripts": {
+		"test": "xo && cd test/fixture && ava",
+		"start": "electron test/fixture",
+		"make-screenshot": "svg-term --at=2000 --command=\"electron test/fixture\" --out=screenshot.svg --window --no-cursor --height=8"
+	},
+	"files": [
+		"index.js"
+	],
+	"keywords": [
+		"electron",
+		"logger",
+		"logging",
+		"log",
+		"timber",
+		"lumber",
+		"dev",
+		"development",
+		"stdout",
+		"stderr",
+		"stream",
+		"error",
+		"debug",
+		"pretty",
+		"console"
+	],
+	"dependencies": {
+		"chalk": "^2.3.0",
+		"electron-util": "^0.5.0",
+		"randoma": "^1.1.0",
+		"split2": "^2.2.0"
+	},
+	"devDependencies": {
+		"ava": "*",
+		"electron": "^1.7.11",
+		"spectron": "^3.7.2",
+		"svg-term-cli": "^2.1.1",
+		"xo": "*"
+	},
+	"xo": {
+		"envs": [
+			"node",
+			"browser"
+		]
+	}
+}
