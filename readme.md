@@ -98,6 +98,15 @@ Type `RegExp`
 Ignore lines matching the given regex.
 
 
+## Toggle loggers
+
+You can show the output of only a subset of the loggers using the environment variable `TIMBER_LOGGERS`. Here we show the output of the default `renderer` logger and a custom `unicorn` logger, but not the default `main` logger:
+
+```sh
+TIMBER_LOGGERS=renderer,unicorn electron .
+```
+
+
 ## Related
 
 - [electron-util](https://github.com/sindresorhus/electron-util) - Useful utilities for developing Electron apps and modules

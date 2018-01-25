@@ -8,7 +8,6 @@ test.beforeEach(async t => {
 		path: electron,
 		args: ['.']
 	});
-	await t.context.app.start();
 });
 
 test.afterEach.always(async t => {
@@ -19,6 +18,7 @@ const cleanLogs = x => x.filter(x => !x.includes('INFO:CONSOLE'));
 
 test('main', async t => {
 	const {app} = t.context;
+	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
 	const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
@@ -34,4 +34,21 @@ test('main', async t => {
 	rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
 	t.regex(rendererLogs[0], /Renderer log/);
 	t.regex(rendererLogs[1], /Renderer error/);
+});
+
+test.serial('toggle loggers', async t => {
+	process.env.TIMBER_LOGGERS = 'renderer,custom';
+
+	const {app} = t.context;
+	await app.start();
+	await app.client.waitUntilWindowLoaded();
+
+	const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
+	t.deepEqual(mainLogs, [
+		'  custom › Custom log',
+		'renderer › Renderer log',
+		'renderer › Renderer error'
+	]);
+
+	delete process.env.TIMBER_LOGGERS;
 });
