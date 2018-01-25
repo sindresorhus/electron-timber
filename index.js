@@ -5,8 +5,8 @@ const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 
-const logChannel = '__ELECTRON_LOGGER_LOG__';
-const errorChannel = '__ELECTRON_LOGGER_ERROR__';
+const logChannel = '__ELECTRON_TIMBER_LOG__';
+const errorChannel = '__ELECTRON_TIMBER_ERROR__';
 
 let longestPrefixLength = 0;
 
