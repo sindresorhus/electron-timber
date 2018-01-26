@@ -36,7 +36,7 @@ app.on('ready', () => {
 	logger.log('Main log');
 	logger.error('Main error');
 
-	const customLogger = logger.create({prefix: 'custom'});
+	const customLogger = logger.create({name: 'custom'});
 	customLogger.log('Custom log');
 });
 ```
@@ -85,11 +85,11 @@ You should initialize this on module load so prefix padding is consistent with t
 
 Type: `Object`
 
-##### prefix
+##### name
 
 Type: `string`
 
-Prefix to use for the logs. Don't use `main` or `renderer`.
+Name of the logger. Used to prefix the log output. Don't use `main` or `renderer`.
 
 ##### ignore
 

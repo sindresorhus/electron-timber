@@ -9,24 +9,22 @@ const logChannel = '__ELECTRON_TIMBER_LOG__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
 
-let longestPrefixLength = 0;
+let longestNameLength = 0;
 
 class Timber {
 	constructor(options = {}) {
-		this.isEnabled = filteredLoggers && options.prefix ? filteredLoggers.has(options.prefix) : true;
-
 		this._options = options;
+		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
+		this.name = options.name || '';
+		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
 
-		this._prefix = options.prefix || '';
-		this._prefixColor = (new Randoma({seed: `${this._prefix}x`})).color().hex().toString();
-
-		if (this._prefix.length > longestPrefixLength) {
-			longestPrefixLength = this._prefix.length;
+		if (this.name.length > longestNameLength) {
+			longestNameLength = this.name.length;
 		}
 	}
 
 	_getPrefix() {
-		return chalk.hex(this._prefixColor)(this._prefix.padStart(longestPrefixLength));
+		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
 	}
 
 	log(...args) {
@@ -36,7 +34,7 @@ class Timber {
 
 		if (is.renderer) {
 			electron.ipcRenderer.send(logChannel, args);
-		} else if (this._prefix) {
+		} else if (this.name) {
 			args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
 		}
 
@@ -54,7 +52,7 @@ class Timber {
 
 		if (is.renderer) {
 			electron.ipcRenderer.send(errorChannel, args);
-		} else if (this._prefix) {
+		} else if (this.name) {
 			args.unshift(this._getPrefix() + ' ' + chalk.red('›'));
 		}
 
@@ -93,11 +91,11 @@ class Timber {
 }
 
 module.exports = new Timber({
-	prefix: is.main ? 'main' : null
+	name: is.main ? 'main' : null
 });
 
 if (is.main) {
-	const rendererLogger = new Timber({prefix: 'renderer'});
+	const rendererLogger = new Timber({name: 'renderer'});
 	electron.ipcMain.on(logChannel, (event, data) => {
 		rendererLogger.log(...data);
 	});
