@@ -7,11 +7,14 @@ const Randoma = require('randoma');
 
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
+const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
 
 let longestPrefixLength = 0;
 
 class Timber {
 	constructor(options = {}) {
+		this.isEnabled = filteredLoggers && options.prefix ? filteredLoggers.has(options.prefix) : true;
+
 		this._options = options;
 
 		this._prefix = options.prefix || '';
@@ -27,6 +30,10 @@ class Timber {
 	}
 
 	log(...args) {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		if (is.renderer) {
 			electron.ipcRenderer.send(logChannel, args);
 		} else if (this._prefix) {
@@ -41,6 +48,10 @@ class Timber {
 	}
 
 	error(...args) {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		if (is.renderer) {
 			electron.ipcRenderer.send(errorChannel, args);
 		} else if (this._prefix) {
@@ -55,6 +66,10 @@ class Timber {
 	}
 
 	streamLog(stream) {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		stream.setEncoding('utf8');
 		stream.pipe(split()).on('data', data => {
 			this.log(data);
@@ -62,6 +77,10 @@ class Timber {
 	}
 
 	streamError(stream) {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		stream.setEncoding('utf8');
 		stream.pipe(split()).on('data', data => {
 			this.error(data);
