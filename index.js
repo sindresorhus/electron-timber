@@ -19,7 +19,7 @@ class Timber {
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
 		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
-		this._timers = {};
+		this._timers = new Map();
 
 		if (this.name.length > longestNameLength) {
 			longestNameLength = this.name.length;
@@ -84,16 +84,15 @@ class Timber {
 		console.error(...args);
 	}
 
-	time(name) {
-		if (name) {
-			this._timers[name] = now();
-		}
+	time(label = 'default') {
+		this._timers.set(label, now());
 	}
 
-	timeEnd(name) {
-		if (this._timers[name]) {
-			const args = [name + ': ' + (now() - this._timers[name]) + 'ms'];
-			delete this._timers[name];
+	timeEnd(label = 'default') {
+		if (this._timers.has(label)) {
+			const prev = this._timers.get(label);
+			const args = [label + ': ' + (now() - prev) + 'ms'];
+			this._timers.delete(label);
 
 			if (is.renderer) {
 				electron.ipcRenderer.send(logChannel, args);
