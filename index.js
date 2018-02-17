@@ -6,6 +6,7 @@ const split = require('split2');
 const Randoma = require('randoma');
 
 const logChannel = '__ELECTRON_TIMBER_LOG__';
+const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
 
@@ -43,6 +44,24 @@ class Timber {
 		}
 
 		console.log(...args);
+	}
+
+	warn(...args) {
+		if (!this.isEnabled) {
+			return;
+		}
+
+		if (is.renderer) {
+			electron.ipcRenderer.send(warnChannel, args);
+		} else if (this.name) {
+			args.unshift(this._getPrefix() + ' ' + chalk.yellow('›'));
+		}
+
+		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+			return;
+		}
+
+		console.warn(...args);
 	}
 
 	error(...args) {
@@ -98,6 +117,9 @@ if (is.main) {
 	const rendererLogger = new Timber({name: 'renderer'});
 	electron.ipcMain.on(logChannel, (event, data) => {
 		rendererLogger.log(...data);
+	});
+	electron.ipcMain.on(warnChannel, (event, data) => {
+		rendererLogger.warn(...data);
 	});
 	electron.ipcMain.on(errorChannel, (event, data) => {
 		rendererLogger.error(...data);
