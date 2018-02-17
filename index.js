@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 
+const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
@@ -18,6 +19,7 @@ class Timber {
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
 		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
+		this._timers = {};
 
 		if (this.name.length > longestNameLength) {
 			longestNameLength = this.name.length;
@@ -80,6 +82,31 @@ class Timber {
 		}
 
 		console.error(...args);
+	}
+
+	time(name) {
+		if (name) {
+			this._timers[name] = now();
+		}
+	}
+
+	timeEnd(name) {
+		if (this._timers[name]) {
+			const args = [name + ': ' + (now() - this._timers[name]) + 'ms'];
+			delete this._timers[name];
+
+			if (is.renderer) {
+				electron.ipcRenderer.send(logChannel, args);
+			} else if (this.name) {
+				args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
+			}
+
+			if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+				return;
+			}
+
+			console.log(...args);
+		}
 	}
 
 	streamLog(stream) {
