@@ -86,10 +86,18 @@ class Timber {
 	}
 
 	time(label = 'default') {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		this._timers.set(label, now());
 	}
 
 	timeEnd(label = 'default') {
+		if (!this.isEnabled) {
+			return;
+		}
+
 		if (this._timers.has(label)) {
 			const prev = this._timers.get(label);
 			const args = [label + ': ' + (now() - prev) + 'ms'];

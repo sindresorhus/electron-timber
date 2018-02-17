@@ -71,6 +71,14 @@ Like `console.warn`.
 
 Like `console.error`.
 
+### time(label)
+
+Like `console.time`.
+
+### timeEnd(label)
+
+Like `console.timeEnd`.
+
 ### streamLog(stream)
 
 Log each line in a [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams). For example, `child_process.spawn(…).stdout`.
