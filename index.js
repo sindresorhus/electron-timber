@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 
+// TODO: use require('perf_hooks') in main process when electron 2.0 comes out (needs node > 8.5.0)
 const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
