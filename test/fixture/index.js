@@ -8,6 +8,7 @@ electron.app.on('ready', async () => {
 	mainWindow.loadURL(`file://${__dirname}/index.html`);
 
 	logger.log('Main log');
+	logger.warn('Main warn');
 	logger.error('Main error');
 
 	const customLogger = logger.create({name: 'custom'});

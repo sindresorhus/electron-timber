@@ -25,15 +25,18 @@ test('main', async t => {
 	t.deepEqual(mainLogs, [
 		'    main › Main log',
 		'  custom › Custom log',
+		'    main › Main warn',
 		'    main › Main error',
 		'renderer › Renderer log',
+		'renderer › Renderer warn',
 		'renderer › Renderer error'
 	]);
 
 	let rendererLogs = await app.client.getRenderProcessLogs();
 	rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
 	t.regex(rendererLogs[0], /Renderer log/);
-	t.regex(rendererLogs[1], /Renderer error/);
+	t.regex(rendererLogs[1], /Renderer warn/);
+	t.regex(rendererLogs[2], /Renderer error/);
 });
 
 test.serial('toggle loggers', async t => {
@@ -47,6 +50,7 @@ test.serial('toggle loggers', async t => {
 	t.deepEqual(mainLogs, [
 		'  custom › Custom log',
 		'renderer › Renderer log',
+		'renderer › Renderer warn',
 		'renderer › Renderer error'
 	]);
 

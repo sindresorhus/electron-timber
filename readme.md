@@ -63,6 +63,10 @@ Logs from the renderer process only show up if you have required `electron-timbe
 
 Like `console.log`.
 
+### warn(…values)
+
+Like `console.warn`.
+
 ### error(…values)
 
 Like `console.error`.
