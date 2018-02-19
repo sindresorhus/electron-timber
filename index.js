@@ -5,6 +5,8 @@ const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 
+// TODO: use require('perf_hooks') in main process when electron 2.0 comes out (needs node > 8.5.0)
+const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
@@ -18,6 +20,7 @@ class Timber {
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
 		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
+		this._timers = new Map();
 
 		if (this.name.length > longestNameLength) {
 			longestNameLength = this.name.length;
@@ -80,6 +83,38 @@ class Timber {
 		}
 
 		console.error(...args);
+	}
+
+	time(label = 'default') {
+		if (!this.isEnabled) {
+			return;
+		}
+
+		this._timers.set(label, now());
+	}
+
+	timeEnd(label = 'default') {
+		if (!this.isEnabled) {
+			return;
+		}
+
+		if (this._timers.has(label)) {
+			const prev = this._timers.get(label);
+			const args = [label + ': ' + (now() - prev) + 'ms'];
+			this._timers.delete(label);
+
+			if (is.renderer) {
+				electron.ipcRenderer.send(logChannel, args);
+			} else if (this.name) {
+				args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
+			}
+
+			if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+				return;
+			}
+
+			console.log(...args);
+		}
 	}
 
 	streamLog(stream) {

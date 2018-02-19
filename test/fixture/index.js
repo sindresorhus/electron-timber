@@ -10,6 +10,8 @@ electron.app.on('ready', async () => {
 	logger.log('Main log');
 	logger.warn('Main warn');
 	logger.error('Main error');
+	logger.time('Main timer');
+	logger.timeEnd('Main timer');
 
 	const customLogger = logger.create({name: 'custom'});
 	customLogger.log('Custom log');

@@ -22,15 +22,20 @@ test('main', async t => {
 	await app.client.waitUntilWindowLoaded();
 
 	const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
-	t.deepEqual(mainLogs, [
-		'    main › Main log',
-		'  custom › Custom log',
-		'    main › Main warn',
-		'    main › Main error',
-		'renderer › Renderer log',
-		'renderer › Renderer warn',
-		'renderer › Renderer error'
-	]);
+
+	// FIXME: For some reason the main processes logs don't come in the same order
+	// every time, see https://github.com/sindresorhus/electron-timber/pull/4
+	mainLogs.sort();
+
+	t.regex(mainLogs[0], /main › Main error/);
+	t.regex(mainLogs[1], /main › Main log/);
+	t.regex(mainLogs[2], /main › Main timer: (:?.+)ms/);
+	t.regex(mainLogs[3], /main › Main warn/);
+	t.regex(mainLogs[4], /custom › Custom log/);
+	t.regex(mainLogs[5], /renderer › Renderer error/);
+	t.regex(mainLogs[6], /renderer › Renderer log/);
+	t.regex(mainLogs[7], /renderer › Renderer timer: (:?.+)ms/);
+	t.regex(mainLogs[8], /renderer › Renderer warn/);
 
 	let rendererLogs = await app.client.getRenderProcessLogs();
 	rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
@@ -47,12 +52,11 @@ test.serial('toggle loggers', async t => {
 	await app.client.waitUntilWindowLoaded();
 
 	const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
-	t.deepEqual(mainLogs, [
-		'  custom › Custom log',
-		'renderer › Renderer log',
-		'renderer › Renderer warn',
-		'renderer › Renderer error'
-	]);
+	t.regex(mainLogs[0], /custom › Custom log/);
+	t.regex(mainLogs[1], /renderer › Renderer log/);
+	t.regex(mainLogs[2], /renderer › Renderer warn/);
+	t.regex(mainLogs[3], /renderer › Renderer error/);
+	t.regex(mainLogs[4], /renderer › Renderer timer: (:?.+)ms/);
 
 	delete process.env.TIMBER_LOGGERS;
 });
