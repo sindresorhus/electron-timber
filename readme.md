@@ -83,6 +83,10 @@ Like `console.timeEnd`.
 
 Log each line in a [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams). For example, `child_process.spawn(…).stdout`.
 
+### streamWarn(stream)
+
+Same as `streamLog`, but logs using `console.warn` instead.
+
 ### streamError(stream)
 
 Same as `streamLog`, but logs using `console.error` instead.
@@ -109,6 +113,25 @@ Type `RegExp`
 
 Ignore lines matching the given regex.
 
+##### logLevel
+
+Type: `string`
+
+May be `"info"` (log everything), `"warn"` (log warnings and errors) or `"error"` (log errors only). Defaults to `"info"` during development and `"warn"` in production.
+
+### getDefaults()
+
+Gets the default options (across `main` and `renderer` processes) for electron-timber. 
+
+### setDefaults([options]) - _main process only_
+
+Sets the default options (across `main` and `renderer` processes) for electron-timber. 
+
+#### options
+
+Type: `Object`
+
+See the options object for the create method above.
 
 ## Toggle loggers
 

@@ -16,7 +16,7 @@ test.afterEach.always(async t => {
 
 const cleanLogs = x => x.filter(x => !x.includes('INFO:CONSOLE'));
 
-test('main', async t => {
+test.serial('main', async t => {
 	const {app} = t.context;
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
@@ -59,4 +59,50 @@ test.serial('toggle loggers', async t => {
 	t.regex(mainLogs[4], /renderer › Renderer timer: (:?.+)ms/);
 
 	delete process.env.TIMBER_LOGGERS;
+});
+
+test('logLevel', async t => {
+	const {app} = t.context;
+	await app.start();
+	await app.client.waitUntilWindowLoaded();
+
+	// Clear logs from starting the app.
+	await app.client.getMainProcessLogs();
+	await app.client.getRenderProcessLogs();
+
+	app.electron.ipcRenderer.send('setDefaults', { logLevel: 'error' });
+
+	// Send some logs to the main process.
+	app.electron.ipcRenderer.send('logger', 'log', 'log');
+	app.electron.ipcRenderer.send('logger', 'warn', 'warn');
+	app.electron.ipcRenderer.send('logger', 'error', 'error');
+
+	// Send some logs to the renderer process.
+	app.browserWindow.send('logger', 'log', 'log');
+	app.browserWindow.send('logger', 'warn', 'warn');
+	app.browserWindow.send('logger', 'error', 'error');
+
+	// Wait to ensure that all IPC messages and logs have completed.
+	return new Promise((resolve, reject) => {
+		setTimeout(async () => {
+			const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
+			
+			// FIXME: see above explanation in the "main" test.
+			mainLogs.sort();
+
+			t.is(mainLogs.length, 5);
+			t.regex(mainLogs[0], /main › error/);
+			t.regex(mainLogs[1], /custom › error/);
+			t.regex(mainLogs[2], /custom › log/);
+			t.regex(mainLogs[3], /custom › warn/);
+			t.regex(mainLogs[4], /renderer › error/);
+
+			let rendererLogs = await app.client.getRenderProcessLogs();
+			rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
+			t.is(rendererLogs.length, 1);
+			t.regex(rendererLogs[0], /error/);
+			
+			resolve();
+		}, 1000);
+	});
 });

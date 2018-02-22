@@ -13,6 +13,14 @@ electron.app.on('ready', async () => {
 	logger.time('Main timer');
 	logger.timeEnd('Main timer');
 
-	const customLogger = logger.create({name: 'custom'});
+	const customLogger = logger.create({name: 'custom', logLevel: 'info'});
 	customLogger.log('Custom log');
+
+	electron.ipcMain.on('setDefaults', (event, newDefaults) => {
+		logger.setDefaults(newDefaults);
+	});
+	electron.ipcMain.on('logger', (event, method, ...args) => {
+		logger[method](...args);
+		customLogger[method](...args);
+	});
 });
