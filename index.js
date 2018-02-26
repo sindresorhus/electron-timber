@@ -30,7 +30,7 @@ let longestNameLength = 0;
 
 class Timber {
 	constructor(options = {}) {
-		this._options = options;
+		this._initialOptions = options;
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
 		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
@@ -41,8 +41,8 @@ class Timber {
 		}
 	}
 
-	get options() {
-		return Object.assign({}, this.getDefaults(), this._options);
+	get _options() {
+		return Object.assign({}, this.getDefaults(), this._initialOptions);
 	}
 
 	_getPrefix() {
@@ -50,7 +50,7 @@ class Timber {
 	}
 
 	log(...args) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.info) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -60,7 +60,7 @@ class Timber {
 			args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
 		}
 
-		if (this.options.ignore && this.options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
 			return;
 		}
 
@@ -68,7 +68,7 @@ class Timber {
 	}
 
 	warn(...args) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.warn) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
 			return;
 		}
 
@@ -78,7 +78,7 @@ class Timber {
 			args.unshift(this._getPrefix() + ' ' + chalk.yellow('›'));
 		}
 
-		if (this.options.ignore && this.options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
 			return;
 		}
 
@@ -86,7 +86,7 @@ class Timber {
 	}
 
 	error(...args) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.error) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
@@ -96,7 +96,7 @@ class Timber {
 			args.unshift(this._getPrefix() + ' ' + chalk.red('›'));
 		}
 
-		if (this.options.ignore && this.options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
 			return;
 		}
 
@@ -104,7 +104,7 @@ class Timber {
 	}
 
 	time(label = 'default') {
-		if (!this.isEnabled || this.options.logLevel > logLevels.info) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -127,7 +127,7 @@ class Timber {
 				args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
 			}
 
-			if (this.options.ignore && this.options.ignore.test(args.join(' '))) {
+			if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
 				return;
 			}
 
@@ -136,7 +136,7 @@ class Timber {
 	}
 
 	streamLog(stream) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.info) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -147,7 +147,7 @@ class Timber {
 	}
 
 	streamWarn(stream) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.warn) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
 			return;
 		}
 
@@ -158,7 +158,7 @@ class Timber {
 	}
 
 	streamError(stream) {
-		if (!this.isEnabled || this.options.logLevel > logLevels.error) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
@@ -173,14 +173,8 @@ class Timber {
 	}
 
 	getDefaults() {
-		const defaults = {};
-		if (is.renderer) {
-			Object.assign(defaults, electron.remote.getGlobal(defaultsNameSpace) || {});
-		} else {
-			Object.assign(defaults, global[defaultsNameSpace]);
-		}
-
-		return defaults;
+		const defaults = is.main ? global[defaultsNameSpace] : electron.remote.getGlobal(defaultsNameSpace);
+		return Object.assign({}, defaults);
 	}
 
 	setDefaults(newDefaults = {}) {
@@ -190,7 +184,7 @@ class Timber {
 
 		// We don't want the "name" property being set as a default.
 		delete newDefaults.name;
-		if ({}.hasOwnProperty.call(newDefaults, 'logLevel')) {
+		if (Reflect.has(newDefaults, 'logLevel')) {
 			newDefaults.logLevel = logLevels[newDefaults.logLevel];
 		}
 
