@@ -59,6 +59,8 @@ Logging will be prefixed with either `main` or `renderer` depending on where it 
 
 Logs from the renderer process only show up if you have required `electron-timber` in the main process.
 
+The methods are bound to the class instance, so you can do: `const log = logger.log; log('Foo');`.
+
 ### log(…values)
 
 Like `console.log`.
@@ -121,11 +123,11 @@ Can be `info` (log everything), `warn` (log warnings and errors), or `error` (lo
 
 ### getDefaults()
 
-Gets the default options (across `main` and `renderer` processes). 
+Gets the default options (across `main` and `renderer` processes).
 
-### setDefaults([options]) *Main process only*
+### setDefaults([options]) <sup><small>*Main process only*</small></sup>
 
-Sets the default options (across `main` and `renderer` processes). 
+Sets the default options (across `main` and `renderer` processes).
 
 #### options
 

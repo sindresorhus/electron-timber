@@ -7,7 +7,9 @@ electron.app.on('ready', async () => {
 	mainWindow = new electron.BrowserWindow();
 	mainWindow.loadURL(`file://${__dirname}/index.html`);
 
-	logger.log('Main log');
+	const log = logger.log;
+	log('Main log');
+
 	logger.warn('Main warn');
 	logger.error('Main error');
 	logger.time('Main timer');

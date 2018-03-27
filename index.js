@@ -4,8 +4,9 @@ const {is} = require('electron-util');
 const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
+const autoBind = require('auto-bind');
 
-// TODO: use require('perf_hooks') in main process when electron 2.0 comes out (needs node > 8.5.0)
+// TODO: Use require('perf_hooks') in main process when Electron 2.0 comes out (needs Node.js >=8.5.0)
 const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
@@ -30,6 +31,8 @@ let longestNameLength = 0;
 
 class Timber {
 	constructor(options = {}) {
+		autoBind(this);
+
 		this._initialOptions = options;
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
