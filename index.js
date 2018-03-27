@@ -10,13 +10,27 @@ const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
+const defaultsNameSpace = '__ELECTRON_TIMBER_DEFAULTS__';
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
+
+const logLevels = {
+	info: 0,
+	warn: 1,
+	error: 2
+};
+
+if (is.main) {
+	global[defaultsNameSpace] = {
+		ignore: null,
+		logLevel: is.development ? logLevels.info : logLevels.warn
+	};
+}
 
 let longestNameLength = 0;
 
 class Timber {
 	constructor(options = {}) {
-		this._options = options;
+		this._initialOptions = options;
 		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
 		this.name = options.name || '';
 		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
@@ -27,12 +41,16 @@ class Timber {
 		}
 	}
 
+	get _options() {
+		return Object.assign({}, this.getDefaults(), this._initialOptions);
+	}
+
 	_getPrefix() {
 		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
 	}
 
 	log(...args) {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -50,7 +68,7 @@ class Timber {
 	}
 
 	warn(...args) {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
 			return;
 		}
 
@@ -68,7 +86,7 @@ class Timber {
 	}
 
 	error(...args) {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
@@ -86,7 +104,7 @@ class Timber {
 	}
 
 	time(label = 'default') {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -118,7 +136,7 @@ class Timber {
 	}
 
 	streamLog(stream) {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -128,8 +146,19 @@ class Timber {
 		});
 	}
 
+	streamWarn(stream) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
+			return;
+		}
+
+		stream.setEncoding('utf8');
+		stream.pipe(split()).on('data', data => {
+			this.warn(data);
+		});
+	}
+
 	streamError(stream) {
-		if (!this.isEnabled) {
+		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
@@ -141,6 +170,25 @@ class Timber {
 
 	create(...args) {
 		return new Timber(...args);
+	}
+
+	getDefaults() {
+		const defaults = is.main ? global[defaultsNameSpace] : electron.remote.getGlobal(defaultsNameSpace);
+		return Object.assign({}, defaults);
+	}
+
+	setDefaults(newDefaults = {}) {
+		if (is.renderer) {
+			throw new Error('setDefaults can only be called from the main process');
+		}
+
+		// We don't want the `name` property being set as a default
+		delete newDefaults.name;
+		if (Reflect.has(newDefaults, 'logLevel')) {
+			newDefaults.logLevel = logLevels[newDefaults.logLevel];
+		}
+
+		Object.assign(global[defaultsNameSpace], newDefaults);
 	}
 }
 

@@ -42,6 +42,7 @@
 	},
 	"devDependencies": {
 		"ava": "*",
+		"delay": "^2.0.0",
 		"electron": "^1.8.2",
 		"spectron": "^3.7.2",
 		"svg-term-cli": "^2.1.1",

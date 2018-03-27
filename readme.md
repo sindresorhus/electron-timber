@@ -83,6 +83,10 @@ Like `console.timeEnd`.
 
 Log each line in a [`stream.Readable`](https://nodejs.org/api/stream.html#stream_readable_streams). For example, `child_process.spawn(…).stdout`.
 
+### streamWarn(stream)
+
+Same as `streamLog`, but logs using `console.warn` instead.
+
 ### streamError(stream)
 
 Same as `streamLog`, but logs using `console.error` instead.
@@ -108,6 +112,26 @@ Name of the logger. Used to prefix the log output. Don't use `main` or `renderer
 Type `RegExp`
 
 Ignore lines matching the given regex.
+
+##### logLevel
+
+Type: `string`
+
+Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only). Defaults to `info` during development and `warn` in production.
+
+### getDefaults()
+
+Gets the default options (across `main` and `renderer` processes). 
+
+### setDefaults([options]) *Main process only*
+
+Sets the default options (across `main` and `renderer` processes). 
+
+#### options
+
+Type: `Object`
+
+Same as the `options` to `create()`.
 
 
 ## Toggle loggers
