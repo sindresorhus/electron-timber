@@ -117,13 +117,13 @@ Ignore lines matching the given regex.
 
 Type: `string`
 
-May be `info` (log everything), `warn` (log warnings and errors) or `error` (log errors only). Defaults to `info` during development and `warn` in production.
+Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only). Defaults to `info` during development and `warn` in production.
 
 ### getDefaults()
 
 Gets the default options (across `main` and `renderer` processes). 
 
-### setDefaults([options]) - *Main process only*
+### setDefaults([options]) *Main process only*
 
 Sets the default options (across `main` and `renderer` processes). 
 
