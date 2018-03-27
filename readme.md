@@ -121,17 +121,18 @@ May be `info` (log everything), `warn` (log warnings and errors) or `error` (log
 
 ### getDefaults()
 
-Gets the default options (across `main` and `renderer` processes) for electron-timber. 
+Gets the default options (across `main` and `renderer` processes). 
 
-### setDefaults([options]) - _main process only_
+### setDefaults([options]) - *Main process only*
 
-Sets the default options (across `main` and `renderer` processes) for electron-timber. 
+Sets the default options (across `main` and `renderer` processes). 
 
 #### options
 
 Type: `Object`
 
-See the options object for the create method above.
+Same as the `options` to `create()`.
+
 
 ## Toggle loggers
 
