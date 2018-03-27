@@ -17,7 +17,7 @@ test.afterEach.always(async t => {
 
 const cleanLogs = x => x.filter(x => !x.includes('INFO:CONSOLE'));
 
-test.serial('main', async t => {
+test('main', async t => {
 	const {app} = t.context;
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
@@ -67,27 +67,27 @@ test('logLevel', async t => {
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
-	// Clear logs from starting the app.
+	// Clear logs from starting the app
 	await app.client.getMainProcessLogs();
 	await app.client.getRenderProcessLogs();
 
 	app.electron.ipcRenderer.send('setDefaults', { logLevel: 'error' });
 
-	// Send some logs to the main process.
+	// Send some logs to the main process
 	app.electron.ipcRenderer.send('logger', 'log', 'log');
 	app.electron.ipcRenderer.send('logger', 'warn', 'warn');
 	app.electron.ipcRenderer.send('logger', 'error', 'error');
 
-	// Send some logs to the renderer process.
+	// Send some logs to the renderer process
 	app.browserWindow.send('logger', 'log', 'log');
 	app.browserWindow.send('logger', 'warn', 'warn');
 	app.browserWindow.send('logger', 'error', 'error');
 
-	// Wait to ensure that all IPC messages and logs have completed.
+	// Wait to ensure that all IPC messages and logs have completed
 	await delay(1000);
 	const mainLogs = cleanLogs(await app.client.getMainProcessLogs());
 
-	// FIXME: see above explanation in the "main" test.
+	// FIXME: See above explanation in the `main` test
 	mainLogs.sort();
 
 	t.is(mainLogs.length, 5);
