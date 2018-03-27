@@ -182,7 +182,7 @@ class Timber {
 			throw new Error('setDefaults can only be called from the main process');
 		}
 
-		// We don't want the "name" property being set as a default.
+		// We don't want the `name` property being set as a default
 		delete newDefaults.name;
 		if (Reflect.has(newDefaults, 'logLevel')) {
 			newDefaults.logLevel = logLevels[newDefaults.logLevel];
