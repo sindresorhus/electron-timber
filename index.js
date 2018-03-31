@@ -26,6 +26,10 @@ if (is.main) {
 	};
 }
 
+// Flag to indicate whether the console has been hooked or not
+let isConsoleHooked = false;
+const _console = {};
+
 let longestNameLength = 0;
 
 class Timber {
@@ -47,6 +51,10 @@ class Timber {
 		return Object.assign({}, this.getDefaults(), this._initialOptions);
 	}
 
+	get _console() {
+		return isConsoleHooked ? _console : console;
+	}
+
 	_getPrefix() {
 		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
 	}
@@ -66,7 +74,7 @@ class Timber {
 			return;
 		}
 
-		console.log(...args);
+		this._console.log(...args);
 	}
 
 	warn(...args) {
@@ -84,7 +92,7 @@ class Timber {
 			return;
 		}
 
-		console.warn(...args);
+		this._console.warn(...args);
 	}
 
 	error(...args) {
@@ -102,7 +110,7 @@ class Timber {
 			return;
 		}
 
-		console.error(...args);
+		this._console.error(...args);
 	}
 
 	time(label = 'default') {
@@ -133,7 +141,7 @@ class Timber {
 				return;
 			}
 
-			console.log(...args);
+			this._console.log(...args);
 		}
 	}
 
@@ -194,9 +202,30 @@ class Timber {
 	}
 }
 
-module.exports = new Timber({
+const logger = new Timber({
 	name: is.main ? 'main' : null
 });
+
+logger.hookConsole = () => {
+	if (isConsoleHooked) {
+		throw new Error('Console already hooked!');
+	}
+	isConsoleHooked = true;
+
+	const methods = ['log', 'warn', 'error', 'time', 'timeEnd'];
+	for (const key of methods) {
+		_console[key] = console[key];
+		console[key] = logger[key];
+	}
+
+	return () => {
+		isConsoleHooked = false;
+		for (const key of methods) {
+			console[key] = _console[key];
+			_console[key] = null;
+		}
+	};
+};
 
 if (is.main) {
 	const rendererLogger = new Timber({name: 'renderer'});
@@ -216,3 +245,5 @@ if (is.main) {
 		});
 	}
 }
+
+module.exports = logger;

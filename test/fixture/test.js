@@ -4,21 +4,23 @@ import {serial as test} from 'ava';
 import {Application} from 'spectron';
 import delay from 'delay';
 
-test.beforeEach(async t => {
-	t.context.app = new Application({
-		path: electron,
-		args: ['.']
-	});
-});
-
 test.afterEach.always(async t => {
-	await t.context.app.stop();
+	if (t.context.app && t.context.app.isRunning()) {
+		await t.context.app.stop();
+	}
 });
 
-const cleanLogs = x => x.filter(x => !x.includes('INFO:CONSOLE'));
+const newApplication = (t, testFile = '.') => {
+	const app = new Application({ path: electron, args: [testFile] });
+	return t.context.app = app;
+};
+
+const cleanLogs = x => x.filter(x => {
+	return !x.includes('INFO:CONSOLE') && !x.includes('DnsConfig');
+});
 
 test('main', async t => {
-	const {app} = t.context;
+	const app = newApplication(t);
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
@@ -48,7 +50,7 @@ test('main', async t => {
 test.serial('toggle loggers', async t => {
 	process.env.TIMBER_LOGGERS = 'renderer,custom';
 
-	const {app} = t.context;
+	const app = newApplication(t);
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
@@ -63,13 +65,9 @@ test.serial('toggle loggers', async t => {
 });
 
 test('logLevel', async t => {
-	const {app} = t.context;
+	const app = newApplication(t, 'index_logLevel.js');
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
-
-	// Clear logs from starting the app
-	await app.client.getMainProcessLogs();
-	await app.client.getRenderProcessLogs();
 
 	app.electron.ipcRenderer.send('setDefaults', { logLevel: 'error' });
 
@@ -101,4 +99,43 @@ test('logLevel', async t => {
 	rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
 	t.is(rendererLogs.length, 1);
 	t.regex(rendererLogs[0], /error/);
+});
+
+test('hookConsole', async t => {
+	const app = newApplication(t, 'index_hookConsole.js');
+	await app.start();
+	await app.client.waitUntilWindowLoaded();
+
+	let mainLogs = cleanLogs(await app.client.getMainProcessLogs());
+
+	// FIXME: See above explanation in the `main` test
+	mainLogs.sort();
+
+	// Custom loggers should not have this method
+	t.true(mainLogs.includes('customLogger.hookConsole is not a function'));
+
+	// Only test logs that have come through electron-timber - there should be
+	// 4 caught by the hooked console in main, and 4 in renderer
+	mainLogs = mainLogs.filter(x => x.includes('›'));
+	t.is(mainLogs.length, 8);
+
+	t.regex(mainLogs[0], /main › Main error console/);
+	t.regex(mainLogs[1], /main › Main log console/);
+	t.regex(mainLogs[2], /main › Main timer console/);
+	t.regex(mainLogs[3], /main › Main warn console/);
+	t.regex(mainLogs[4], /renderer › Renderer error console/);
+	t.regex(mainLogs[5], /renderer › Renderer log console/);
+	t.regex(mainLogs[6], /renderer › Renderer timer console/);
+	t.regex(mainLogs[7], /renderer › Renderer warn console/);
+
+	let rendererLogs = await app.client.getRenderProcessLogs();
+	rendererLogs = cleanLogs(rendererLogs.map(x => x.message));
+
+	// Ensure that these logs have come from electron-timber
+	rendererLogs = rendererLogs.filter(x => x.includes('electron-timber/index'));
+	t.is(rendererLogs.length, 4);
+	t.regex(rendererLogs[0], /Renderer log console/);
+	t.regex(rendererLogs[1], /Renderer warn console/);
+	t.regex(rendererLogs[2], /Renderer error console/);
+	t.regex(rendererLogs[3], /Renderer timer console/);
 });
