@@ -44,7 +44,7 @@ app.on('ready', () => {
 Renderer process:
 
 ```js
-const logger = require('timber');
+const logger = require('electron-timber');
 
 logger.log('Renderer log');
 logger.error('Renderer error');
