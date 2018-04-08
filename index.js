@@ -201,13 +201,19 @@ module.exports = new Timber({
 
 if (is.main) {
 	const rendererLogger = new Timber({name: 'renderer'});
-	electron.ipcMain.on(logChannel, (event, data) => {
-		rendererLogger.log(...data);
-	});
-	electron.ipcMain.on(warnChannel, (event, data) => {
-		rendererLogger.warn(...data);
-	});
-	electron.ipcMain.on(errorChannel, (event, data) => {
-		rendererLogger.error(...data);
-	});
+	if (electron.ipcMain.listenerCount(logChannel) === 0) {
+		electron.ipcMain.on(logChannel, (event, data) => {
+			rendererLogger.log(...data);
+		});
+	}
+	if (electron.ipcMain.listenerCount(warnChannel) === 0) {
+		electron.ipcMain.on(warnChannel, (event, data) => {
+			rendererLogger.warn(...data);
+		});
+	}
+	if (electron.ipcMain.listenerCount(errorChannel) === 0) {
+		electron.ipcMain.on(errorChannel, (event, data) => {
+			rendererLogger.error(...data);
+		});
+	}
 }
