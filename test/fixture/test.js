@@ -15,9 +15,8 @@ const newApplication = (t, testFile = '.') => {
 	return t.context.app = app;
 };
 
-const cleanLogs = x => x.filter(x => {
-	return !x.includes('INFO:CONSOLE') && !x.includes('DnsConfig');
-});
+const ignores = ['INFO:CONSOLE', 'DnsConfig', 'security-warnings.js'];
+const cleanLogs = logs => logs.filter(log => ignores.every(x => !log.includes(x)));
 
 test('main', async t => {
 	const app = newApplication(t);
