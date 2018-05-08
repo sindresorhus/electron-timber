@@ -1,13 +1,12 @@
 'use strict';
 const electron = require('electron');
+const {performance} = global.performance ? global : require('perf_hooks');
 const {is} = require('electron-util');
 const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 const autoBind = require('auto-bind');
 
-// TODO: Use require('perf_hooks') in main process when Electron 2.0 comes out (needs Node.js >=8.5.0)
-const now = () => global.performance ? global.performance.now() : Date.now();
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
@@ -111,7 +110,7 @@ class Timber {
 			return;
 		}
 
-		this._timers.set(label, now());
+		this._timers.set(label, performance.now());
 	}
 
 	timeEnd(label = 'default') {
@@ -121,7 +120,7 @@ class Timber {
 
 		if (this._timers.has(label)) {
 			const prev = this._timers.get(label);
-			const args = [label + ': ' + (now() - prev) + 'ms'];
+			const args = [label + ': ' + (performance.now() - prev) + 'ms'];
 			this._timers.delete(label);
 
 			if (is.renderer) {

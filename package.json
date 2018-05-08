@@ -36,15 +36,15 @@
 	],
 	"dependencies": {
 		"auto-bind": "^1.2.0",
-		"chalk": "^2.3.0",
-		"electron-util": "^0.7.0",
-		"randoma": "^1.1.0",
+		"chalk": "^2.4.1",
+		"electron-util": "^0.8.2",
+		"randoma": "^1.2.0",
 		"split2": "^2.2.0"
 	},
 	"devDependencies": {
 		"ava": "*",
 		"delay": "^2.0.0",
-		"electron": "^1.8.2",
+		"electron": "^2.0.0",
 		"spectron": "^3.7.2",
 		"svg-term-cli": "^2.1.1",
 		"xo": "*"
