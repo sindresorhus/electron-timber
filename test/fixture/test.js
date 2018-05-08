@@ -117,7 +117,6 @@ test('hookConsole', async t => {
 	// 4 caught by the hooked console in main, and 4 in renderer
 	mainLogs = mainLogs.filter(x => x.includes('›'));
 	t.is(mainLogs.length, 8);
-
 	t.regex(mainLogs[0], /main › Main error console/);
 	t.regex(mainLogs[1], /main › Main log console/);
 	t.regex(mainLogs[2], /main › Main timer console/);
