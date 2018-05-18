@@ -156,6 +156,12 @@ TIMBER_LOGGERS=renderer,unicorn electron .
 - [electron-unhandled](https://github.com/sindresorhus/electron-unhandled) - Catch unhandled errors and promise rejections in your Electron app
 
 
+## Maintainers
+
+- [Sindre Sorhus](https://github.com/sindresorhus)
+- [@acheronfail](https://github.com/acheronfail)
+
+
 ## License
 
-MIT © [Sindre Sorhus](https://sindresorhus.com)
+MIT
