@@ -1,7 +1,8 @@
 'use strict';
 const electron = require('electron');
 const {performance} = global.performance ? global : require('perf_hooks');
-const {is} = require('electron-util');
+const path = require('path');
+const {is, appReady} = require('electron-util');
 const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
@@ -10,8 +11,10 @@ const autoBind = require('auto-bind');
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
+const updateChannel = '__ELECTRON_TIMBER_UPDATE__';
 const defaultsNameSpace = '__ELECTRON_TIMBER_DEFAULTS__';
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
+const preloadScript = path.resolve(__dirname, 'preload.js');
 
 const logLevels = {
 	info: 0,
@@ -22,9 +25,15 @@ const logLevels = {
 if (is.main) {
 	global[defaultsNameSpace] = {
 		ignore: null,
+		shouldHookConsole: false,
 		logLevel: is.development ? logLevels.info : logLevels.warn
 	};
 }
+
+// Flag to indicate whether the console has been hooked or not
+let isConsoleHooked = false;
+const _console = {};
+const hookableMethods = ['log', 'warn', 'error', 'time', 'timeEnd'];
 
 let longestNameLength = 0;
 
@@ -47,6 +56,10 @@ class Timber {
 		return Object.assign({}, this.getDefaults(), this._initialOptions);
 	}
 
+	get _console() {
+		return isConsoleHooked ? _console : console;
+	}
+
 	_getPrefix() {
 		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
 	}
@@ -66,7 +79,7 @@ class Timber {
 			return;
 		}
 
-		console.log(...args);
+		this._console.log(...args);
 	}
 
 	warn(...args) {
@@ -84,7 +97,7 @@ class Timber {
 			return;
 		}
 
-		console.warn(...args);
+		this._console.warn(...args);
 	}
 
 	error(...args) {
@@ -102,7 +115,7 @@ class Timber {
 			return;
 		}
 
-		console.error(...args);
+		this._console.error(...args);
 	}
 
 	time(label = 'default') {
@@ -133,7 +146,7 @@ class Timber {
 				return;
 			}
 
-			console.log(...args);
+			this._console.log(...args);
 		}
 	}
 
@@ -194,9 +207,61 @@ class Timber {
 	}
 }
 
-module.exports = new Timber({
+const logger = new Timber({
 	name: is.main ? 'main' : null
 });
+
+const unhookConsoleFn = (hookThisConsole, shouldHookRenderers) => () => {
+	if (isConsoleHooked) {
+		if (hookThisConsole) {
+			isConsoleHooked = false;
+			for (const key of hookableMethods) {
+				console[key] = _console[key];
+				_console[key] = null;
+			}
+		}
+
+		if (shouldHookRenderers) {
+			hookRenderers(false);
+		}
+	}
+};
+
+logger.hookConsole = ({main, renderer} = {main: is.main, renderer: is.renderer}) => {
+	if (main && is.renderer) {
+		throw new Error('You cannot hook the console in the main process from a renderer process.');
+	}
+
+	const hookThisConsole = (is.main && main) || (is.renderer && renderer);
+	const shouldHookRenderers = is.main && renderer;
+
+	if (hookThisConsole) {
+		if (isConsoleHooked) {
+			return unhookConsoleFn(hookThisConsole, shouldHookRenderers);
+		}
+		isConsoleHooked = true;
+
+		for (const key of hookableMethods) {
+			_console[key] = console[key];
+			console[key] = logger[key];
+		}
+	}
+
+	if (shouldHookRenderers) {
+		hookRenderers(true);
+	}
+
+	return unhookConsoleFn(hookThisConsole, shouldHookRenderers);
+};
+
+function hookRenderers(flag) {
+	if (is.main) {
+		global[defaultsNameSpace].shouldHookConsole = flag;
+		for (const win of electron.BrowserWindow.getAllWindows()) {
+			win.webContents.send(updateChannel, flag);
+		}
+	}
+}
 
 if (is.main) {
 	const rendererLogger = new Timber({name: 'renderer'});
@@ -215,4 +280,29 @@ if (is.main) {
 			rendererLogger.error(...data);
 		});
 	}
+
+	// Register a preload script so we know whenever a new renderer is created.
+	appReady.then(() => {
+		const session = electron.session.defaultSession;
+		const currentPreloads = session.getPreloads();
+		if (!currentPreloads.includes(preloadScript)) {
+			session.setPreloads(currentPreloads.concat([preloadScript]));
+		}
+	});
+} else if (is.renderer) {
+	if (electron.ipcRenderer.listenerCount(updateChannel) === 0) {
+		electron.ipcRenderer.on(updateChannel, (event, flag) => {
+			if (flag) {
+				logger.hookConsole();
+			} else {
+				isConsoleHooked = false;
+				for (const key of hookableMethods) {
+					console[key] = _console[key];
+					_console[key] = null;
+				}
+			}
+		});
+	}
 }
+
+module.exports = logger;
