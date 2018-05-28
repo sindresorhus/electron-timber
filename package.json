@@ -15,7 +15,8 @@
 		"make-screenshot": "svg-term --at=2000 --command=\"electron test/fixture\" --out=screenshot.svg --window --no-cursor --height=8"
 	},
 	"files": [
-		"index.js"
+		"index.js",
+		"preload.js"
 	],
 	"keywords": [
 		"electron",
