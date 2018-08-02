@@ -37,6 +37,7 @@
 	],
 	"dependencies": {
 		"auto-bind": "^1.2.0",
+		"callsites": "^2.0.0",
 		"chalk": "^2.4.1",
 		"electron-util": "^0.8.2",
 		"randoma": "^1.2.0",
