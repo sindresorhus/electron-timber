@@ -8,10 +8,12 @@ const split = require('split2');
 const Randoma = require('randoma');
 const autoBind = require('auto-bind');
 
-const logChannel = '__ELECTRON_TIMBER_LOG__';
-const warnChannel = '__ELECTRON_TIMBER_WARN__';
-const errorChannel = '__ELECTRON_TIMBER_ERROR__';
-const updateChannel = '__ELECTRON_TIMBER_UPDATE__';
+const channel = {
+	log: '__ELECTRON_TIMBER_LOG__',
+	warn: '__ELECTRON_TIMBER_WARN__',
+	error: '__ELECTRON_TIMBER_ERROR__',
+	update: '__ELECTRON_TIMBER_UPDATE__'
+};
 const defaultsNameSpace = '__ELECTRON_TIMBER_DEFAULTS__';
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
 const preloadScript = path.resolve(__dirname, 'preload.js');
@@ -35,6 +37,7 @@ let isConsoleHooked = false;
 const _console = {};
 const hookableMethods = ['log', 'warn', 'error', 'time', 'timeEnd'];
 
+const separator = '›';
 let longestNameLength = 0;
 
 class Timber {
@@ -64,123 +67,71 @@ class Timber {
 		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
 	}
 
-	log(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
+	_write(logLevel, fnConsole, chalkTransform, args) {
+		if (logLevel && (!this.isEnabled || this._options.logLevel > logLevels[logLevel])) {
 			return;
 		}
 
 		if (is.renderer) {
-			electron.ipcRenderer.send(logChannel, args);
+			electron.ipcRenderer.send(channel[fnConsole], args);
 		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
+			args.unshift(this._getPrefix() + ' ' + chalk[chalkTransform](separator));
 		}
 
 		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
 			return;
 		}
 
-		this._console.log(...args);
+		this._console[fnConsole](...args);
+	}
+
+	_writeStream(stream, logLevel, fnConsole) {
+		if (this.isEnabled && this._options.logLevel <= logLevels[logLevel]) {
+			stream.setEncoding('utf8');
+			stream.pipe(split()).on('data', data => {
+				this[fnConsole](data);
+			});
+		}
+	}
+
+	log(...args) {
+		this._write('info', 'log', 'dim', args);
 	}
 
 	warn(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
-			return;
-		}
-
-		if (is.renderer) {
-			electron.ipcRenderer.send(warnChannel, args);
-		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.yellow('›'));
-		}
-
-		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
-			return;
-		}
-
-		this._console.warn(...args);
+		this._write('warn', 'warn', 'yellow', args);
 	}
 
 	error(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
-			return;
-		}
-
-		if (is.renderer) {
-			electron.ipcRenderer.send(errorChannel, args);
-		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.red('›'));
-		}
-
-		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
-			return;
-		}
-
-		this._console.error(...args);
+		this._write('error', 'error', 'red', args);
 	}
 
 	time(label = 'default') {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
-			return;
+		if (this.isEnabled && this._options.logLevel <= logLevels.info) {
+			this._timers.set(label, performance.now());
 		}
-
-		this._timers.set(label, performance.now());
 	}
 
 	timeEnd(label = 'default') {
-		if (!this.isEnabled) {
-			return;
-		}
-
-		if (this._timers.has(label)) {
+		if (this.isEnabled && this._timers.has(label)) {
 			const prev = this._timers.get(label);
 			const args = [label + ': ' + (performance.now() - prev) + 'ms'];
 			this._timers.delete(label);
 
-			if (is.renderer) {
-				electron.ipcRenderer.send(logChannel, args);
-			} else if (this.name) {
-				args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
-			}
-
-			if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
-				return;
-			}
-
-			this._console.log(...args);
+			this._write(null, 'log', 'dim', args);
 		}
 	}
 
 	streamLog(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
-			return;
-		}
-
-		stream.setEncoding('utf8');
-		stream.pipe(split()).on('data', data => {
-			this.log(data);
-		});
+		this._writeStream(stream, 'info', 'log');
 	}
 
 	streamWarn(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
-			return;
-		}
-
-		stream.setEncoding('utf8');
-		stream.pipe(split()).on('data', data => {
-			this.warn(data);
-		});
+		this._writeStream(stream, 'warn', 'warn');
 	}
 
 	streamError(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
-			return;
-		}
-
-		stream.setEncoding('utf8');
-		stream.pipe(split()).on('data', data => {
-			this.error(data);
-		});
+		this._writeStream(stream, 'error', 'error');
 	}
 
 	create(...args) {
@@ -212,18 +163,20 @@ const logger = new Timber({
 });
 
 const unhookConsoleFn = (hookThisConsole, shouldHookRenderers) => () => {
-	if (isConsoleHooked) {
-		if (hookThisConsole) {
-			isConsoleHooked = false;
-			for (const key of hookableMethods) {
-				console[key] = _console[key];
-				_console[key] = null;
-			}
-		}
+	if (!isConsoleHooked) {
+		return;
+	}
 
-		if (shouldHookRenderers) {
-			hookRenderers(false);
+	if (hookThisConsole) {
+		isConsoleHooked = false;
+		for (const key of hookableMethods) {
+			console[key] = _console[key];
+			_console[key] = null;
 		}
+	}
+
+	if (shouldHookRenderers) {
+		hookRenderers(false);
 	}
 };
 
@@ -258,28 +211,21 @@ function hookRenderers(flag) {
 	if (is.main) {
 		global[defaultsNameSpace].shouldHookConsole = flag;
 		for (const win of electron.BrowserWindow.getAllWindows()) {
-			win.webContents.send(updateChannel, flag);
+			win.webContents.send(channel.update, flag);
 		}
 	}
 }
 
 if (is.main) {
 	const rendererLogger = new Timber({name: 'renderer'});
-	if (electron.ipcMain.listenerCount(logChannel) === 0) {
-		electron.ipcMain.on(logChannel, (event, data) => {
+	['log', 'warn', 'error'].forEach(fnConsole => {
+		if (electron.ipcMain.listenerCount(channel[fnConsole]) > 0) {
+			return;
+		}
+		electron.ipcMain.on(channel[fnConsole], (event, data) => {
 			rendererLogger.log(...data);
 		});
-	}
-	if (electron.ipcMain.listenerCount(warnChannel) === 0) {
-		electron.ipcMain.on(warnChannel, (event, data) => {
-			rendererLogger.warn(...data);
-		});
-	}
-	if (electron.ipcMain.listenerCount(errorChannel) === 0) {
-		electron.ipcMain.on(errorChannel, (event, data) => {
-			rendererLogger.error(...data);
-		});
-	}
+	});
 
 	// Register a preload script so we know whenever a new renderer is created.
 	appReady.then(() => {
@@ -289,20 +235,18 @@ if (is.main) {
 			session.setPreloads(currentPreloads.concat([preloadScript]));
 		}
 	});
-} else if (is.renderer) {
-	if (electron.ipcRenderer.listenerCount(updateChannel) === 0) {
-		electron.ipcRenderer.on(updateChannel, (event, flag) => {
-			if (flag) {
-				logger.hookConsole();
-			} else {
-				isConsoleHooked = false;
-				for (const key of hookableMethods) {
-					console[key] = _console[key];
-					_console[key] = null;
-				}
+} else if (is.renderer && electron.ipcRenderer.listenerCount(channel.update) === 0) {
+	electron.ipcRenderer.on(channel.update, (event, flag) => {
+		if (flag) {
+			logger.hookConsole();
+		} else {
+			isConsoleHooked = false;
+			for (const key of hookableMethods) {
+				console[key] = _console[key];
+				_console[key] = null;
 			}
-		});
-	}
+		}
+	});
 }
 
 module.exports = logger;
