@@ -37,42 +37,42 @@ module.exports = {
 		// Same as `channel.update`, but used to notify renderer loggers in
 		// chromium devTools/extensions, because they don't have a browserWindow
 		// ID to fetch it.
-		updateExtensions: buildChannel('UPDATE_EXTENSIONS'),
+		updateExtensions: buildChannel('UPDATE_EXTENSIONS')
 	},
 	css: {
 		dim: 'color:#696969;',
 		placeholder: '%c',
-		reset: 'color:#000000;',
+		reset: 'color:#000000;'
 	},
 	defaults: {
 		levels: {
-			error:   {color: '#FF0000', priority: 0},
-			warn:    {color: '#FFFF00', priority: 1},
-			info:    {color: '#0000FF', priority: 2},
+			error: {color: '#FF0000', priority: 0},
+			warn: {color: '#FFFF00', priority: 1},
+			info: {color: '#0000FF', priority: 2},
 			verbose: {color: '#FF00FF', priority: 3},
-			debug:   {color: '#008000', priority: 4},
-			silly:   {color: '#808080', priority: 5},
+			debug: {color: '#008000', priority: 4},
+			silly: {color: '#808080', priority: 5}
 		},
 		logger: 'timber',
 		nameSpace: '__ELECTRON_TIMBER_DEFAULTS__',
 		timer: {
 			label: 'default',
-			logLevel: 'info',
-		},
+			logLevel: 'info'
+		}
 	},
 	env: {
 		TIMBER_LOGGERS: 'TIMBER_LOGGERS'
 	},
 	hookableMethods: ['log', 'warn', 'error', 'time', 'timeEnd'],
-	noop: function() {},
+	noop() {},
 	padBwIdDigits: 2,
 	side: {
 		MAIN: 'main',
-		RENDERER: 'renderer',
+		RENDERER: 'renderer'
 	},
 	text: {
 		blank,
 		indent: blank.repeat(2),
-		lf: '\n',
-	},
+		lf: '\n'
+	}
 };

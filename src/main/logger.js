@@ -4,10 +4,8 @@ const {app, BrowserWindow, ipcMain, session} = require('electron');
 const {join} = require('path');
 
 const {channel, defaults, padBwIdDigits, side, text} = require('../common/constants');
-const {getTransports, has, isArray, isNil, isString, oneOf} = require('../common/utils');
-const TimberLogger = require('../common/AbstractLogger');
-
-let logger;
+const {getTransports, has, isArray, isNil, isObject, isString, oneOf} = require('../common/utils');
+const TimberLogger = require('../common/abstract-logger');
 
 class TimberMain extends TimberLogger {
 	/**
@@ -32,8 +30,10 @@ class TimberMain extends TimberLogger {
 		let rendererID;
 
 		const excludedWID = exclude && `${exclude.wid}`;
-		TimberLogger._loggers.forEach((instances, name, map) => {
-			if (!instances) return;
+		TimberLogger._loggers.forEach((instances, name) => {
+			if (!instances) {
+				return;
+			}
 			const isExcluded = exclude ? (name === exclude.logger) : false;
 
 			if (instances.main && (!isExcluded || exclude.wid)) {
@@ -59,7 +59,7 @@ class TimberMain extends TimberLogger {
 		if (rendererID) {
 			const extChannel = channel.updateExtensions;
 			const compactFlags = JSON.stringify(needsRebuild);
-			const code = `require('electron').ipcRenderer.send("${extChannel}", ${compactFlags}, ${maxNameLength});`
+			const code = `require('electron').ipcRenderer.send("${extChannel}", ${compactFlags}, ${maxNameLength});`;
 			const bw = BrowserWindow.fromId(parseInt(rendererID, 10));
 			bw.webContents.executeJavaScript(code);
 		}
@@ -68,7 +68,7 @@ class TimberMain extends TimberLogger {
 	_calcPads() {
 		this._pads = {
 			left: text.blank.repeat(TimberLogger._maxNameLength - this.name.length),
-			right: text.blank.repeat(side.RENDERER.length + padBwIdDigits + 1 - this._side.length),
+			right: text.blank.repeat(side.RENDERER.length + padBwIdDigits + 1 - this._side.length)
 		};
 	}
 
@@ -80,7 +80,7 @@ class TimberMain extends TimberLogger {
 			TimberLogger._maxNameLength = nameLength;
 			this._broadcastUpdate({contexts: true}, {
 				logger: loggerName,
-				wid: rendererID,
+				wid: rendererID
 			});
 		}
 
@@ -127,7 +127,9 @@ class TimberMain extends TimberLogger {
 				firstLoggerFromRenderer.renderer[rendererID] = true;
 				TimberLogger._loggers.set(name, firstLoggerFromRenderer);
 			}
-			if (event) event.returnValue = basicShared;
+			if (event) {
+				event.returnValue = basicShared;
+			}
 			return basicShared;
 		}
 
@@ -144,9 +146,11 @@ class TimberMain extends TimberLogger {
 			const shared = Object.assign(basicShared, {
 				color: instances.main._color,
 				levels: instances.main._levels,
-				options: instances.main._initialOptions,
+				options: instances.main._initialOptions
 			});
-			if (event) event.returnValue = shared;
+			if (event) {
+				event.returnValue = shared;
+			}
 			return shared;
 		}
 
@@ -182,7 +186,7 @@ class TimberMain extends TimberLogger {
 
 			// Set listener to catch the response from the renderer logger.
 			ipcMain.once(bwLoggerChannel, (bwEvent, rendererConfig) => {
-				for (let id of rendererLoggers) {
+				for (const id of rendererLoggers) {
 					const wid = parseInt(id, 10);
 					BrowserWindow.fromId(wid).webContents.send(channel.config, true);
 				}
@@ -193,7 +197,7 @@ class TimberMain extends TimberLogger {
 			BrowserWindow.fromId(parseInt(rendererLoggers[0], 10)).webContents.send(bwLoggerChannel, false);
 			// FIXME We should return here the config in a sync way to the main
 			//   logger requestor, but I have no idea on how to do this!
-			return;
+			// return rendererConfig;
 		}
 	}
 
@@ -201,7 +205,7 @@ class TimberMain extends TimberLogger {
 		// Save a reference to this logger.
 		const instances = TimberLogger._loggers.get(this.name) || {
 			main: null,
-			renderer: {},
+			renderer: {}
 		};
 		instances.main = this;
 		TimberLogger._loggers.set(this.name, instances);
@@ -212,13 +216,19 @@ class TimberMain extends TimberLogger {
 	}
 
 	_purgeDestroyedRenderers(instances) {
-		if (!instances || !instances.renderer) return [];
+		if (!instances || !instances.renderer) {
+			return [];
+		}
 		const wids = Object.keys(instances.renderer);
-		if (wids.lentgth === 0) return [];
+		if (wids.lentgth === 0) {
+			return [];
+		}
 
-		for (let wid of wids) {
+		for (const wid of wids) {
 			const bw = BrowserWindow.fromId(parseInt(wid, 10));
-			if (!bw) delete instances.renderer[wid];
+			if (!bw) {
+				delete instances.renderer[wid];
+			}
 		}
 		return Object.keys(instances.renderer);
 	}
@@ -257,13 +267,13 @@ class TimberMain extends TimberLogger {
 			helpers: false,
 			hooks: false,
 			levels: hasChanged('devToolsDarkTheme', newDefaults.devToolsDarkTheme),
-			transports: false,
+			transports: false
 		};
 
 		// Validate options.
 		// Some ones (`devToolsDarkTheme`/`timestamp`) require rebuilding the logger contexts.
 		// Other ones (`ignore`/`logLevel`/`prettify`) require rebuilding the log level helpers.
-		let supported = {
+		const supported = {
 			collector: [false, 'main', 'renderer'],
 			devToolsDarkTheme: [false, true],
 			logLevel: null, // Validated in `_mapLogLevelToPriority()`.
@@ -271,11 +281,13 @@ class TimberMain extends TimberLogger {
 			prettify: ['all', 'context', 'none'],
 			separator: null, // Custom validation.
 			shouldHookConsole: [false, true],
-			timestamp: [false, 'iso', 'time'],
+			timestamp: [false, 'iso', 'time']
 		};
 		Object.keys(supported).forEach(o => {
 			const v = newDefaults[o];
-			if (v === undefined) return;
+			if (v === undefined) {
+				return;
+			}
 
 			// Update flags.
 			if (o === 'devToolsDarkTheme' || o === 'timestamp') {
@@ -289,9 +301,9 @@ class TimberMain extends TimberLogger {
 			let valid = (supported[o] === null || oneOf(supported[o], v));
 			if (!valid) {
 				// These options can take additional values which requires a more-in-depth validation.
-				if ((o === 'collector' && parseInt(v, 10) > 0)
-					|| (o === 'muteElectronInspector' && parseInt(v, 10) >= 0)
-					|| (o === 'separator' && isString(v))
+				if ((o === 'collector' && parseInt(v, 10) > 0) ||
+					(o === 'muteElectronInspector' && parseInt(v, 10) >= 0) ||
+					(o === 'separator' && isString(v))
 				) {
 					valid = true;
 				}
@@ -307,10 +319,10 @@ class TimberMain extends TimberLogger {
 		let val = newDefaults[opt];
 		const mapTransport = getTransports(__dirname);
 		if (!isNil(val)) {
-			needsUpdate.transports = true;
+			update.transports = true;
 			const validTransport = v => {
-				return (isString(v) && has(mapTransport, v))
-					|| (isObject(v) && has(mapTransport, v.type));
+				return (isString(v) && has(mapTransport, v)) ||
+					(isObject(v) && has(mapTransport, v.type));
 			};
 			if (!isArray(val) || !val.every(validTransport)) {
 				throw new Error(`Invalid value provided for option "${opt}": ${val}`);
@@ -352,9 +364,9 @@ class TimberMain extends TimberLogger {
 
 	setLevels(levels) {
 		this._setLevels(levels);
-		TimberLogger._loggers.forEach((instances, name) => {
+		TimberLogger._loggers.forEach(instances => {
 			Object.keys(instances.renderer).forEach(wid => {
-				const bw = BrowserWindow.fromId(wid);
+				const bw = BrowserWindow.fromId(parseInt(wid, 10));
 				bw.webContents.send(channel.setLevels, levels);
 			});
 		});
@@ -371,11 +383,14 @@ function injectPreloadScript() {
 	}
 }
 
+// eslint-disable-next-line prefer-const
+let defaultLogger;
+
 /** *************
  * STATIC STUFF *
  * **************/
 TimberMain._initOnce = () => {
-	if (logger) {
+	if (defaultLogger) {
 		return;
 	}
 
@@ -398,7 +413,7 @@ TimberMain._initOnce = () => {
 				instances.main._setLevels(levels);
 			}
 			Object.keys(instances.renderer).forEach(bwID => {
-				const wid = parseInt(wid, 10);
+				const wid = parseInt(bwID, 10);
 				if (wid !== rendererID) {
 					const bw = BrowserWindow.fromId(wid);
 					bw.webContents.send(channel.setLevels, levels);
@@ -412,7 +427,7 @@ TimberMain._initOnce = () => {
 		// Keep track of renderer loggers, and inherit options when a
 		// logger with the same name exists.
 		ipcMain.on(channel.config, (...args) => {
-			logger._getSharedSettings(...args);
+			defaultLogger._getSharedSettings(...args);
 		});
 	}
 
@@ -420,8 +435,8 @@ TimberMain._initOnce = () => {
 		// Allow setting defaults from anywhere through IPC.
 		ipcMain.on(channel.defaults, (event, ...args) => {
 			event.returnValue = {
-				rebuild: logger.setDefaults(...args),
-				maxNameLength: TimberLogger._maxNameLength,
+				rebuild: defaultLogger.setDefaults(...args),
+				maxNameLength: TimberLogger._maxNameLength
 			};
 		});
 	}
@@ -443,6 +458,6 @@ TimberMain._initOnce = () => {
 	}
 };
 
-logger = new TimberMain({name: defaults.logger});
+defaultLogger = new TimberMain({name: defaults.logger});
 
-module.exports = logger;
+module.exports = defaultLogger;

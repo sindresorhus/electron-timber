@@ -2,7 +2,7 @@
 
 const {ipcRenderer, remote} = require('electron');
 
-const ConsoleTransport = require('../../common/transports/AbstractConsole');
+const ConsoleTransport = require('../../common/transports/abstract-console');
 const {channel, defaults} = require('../../common/constants');
 
 class RendererConsoleTransport extends ConsoleTransport {
@@ -13,7 +13,9 @@ class RendererConsoleTransport extends ConsoleTransport {
 	_configCollect() {
 		const {collector} = remote.getGlobal(defaults.nameSpace);
 		this._shouldResend = collector && (collector !== this._id || !this._isDefaultLogger);
-		if (this._shouldResend) return;
+		if (this._shouldResend) {
+			return;
+		}
 
 		// Remove existent listeners (if any)...
 		if (remote.ipcMain.listenerCount(channel.collector) > 0) {
@@ -38,7 +40,9 @@ class RendererConsoleTransport extends ConsoleTransport {
 		// print messages, but we already redirect those consoles to main one.
 		// Those contexts don't have the Electron API available, so we won't
 		// have any BrowserWindow ID there.
-		if (!this._id) return;
+		if (!this._id) {
+			return;
+		}
 
 		// We don't want to collect on the same browserWindow (log twice)!
 		if (this._shouldResend) {
@@ -48,6 +52,6 @@ class RendererConsoleTransport extends ConsoleTransport {
 		const method = this._getMethod(levelPriority);
 		this.getNativeConsoleBackup()[method](...args.renderer);
 	}
-};
+}
 
 module.exports = RendererConsoleTransport;

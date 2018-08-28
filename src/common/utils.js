@@ -8,11 +8,11 @@ const chalk = require('chalk');
 const {text} = require('./constants');
 
 const transports = [
-	'console',
+	'console'
 ];
 
 const utils = {
-	_calcMaxLength(accumulator, currentValue, currentIndex, collection) {
+	_calcMaxLength(accumulator, currentValue) {
 		const currentLength = currentValue.length;
 		return (currentLength > accumulator) ? currentLength : accumulator;
 	},
@@ -20,21 +20,21 @@ const utils = {
 	_findCaller() {
 		for (const caller of callsites()) {
 			const filename = caller.getFileName();
-			if (filename !== 'module.js' && /[\\\/]electron-timber[\\\/]/.test(filename) === false) {
+			if (filename !== 'module.js' && /[/\\]electron-timber[/\\]/.test(filename) === false) {
 				return filename;
 			}
 		}
 	},
 
 	capitalize(txt) {
-	    return txt.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+		return txt.replace(/(?:^|\s)\S/g, a => a.toUpperCase());
 	},
 
 	contrastRatio(luminanceA, luminanceB, delta = 0.05) {
 		// See https://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef
-		return (luminanceA > luminanceB)
-			? ((luminanceA + delta) / (luminanceB + delta))
-			: ((luminanceB + delta) / (luminanceA + delta));
+		return (luminanceA > luminanceB) ?
+			((luminanceA + delta) / (luminanceB + delta)) :
+			((luminanceB + delta) / (luminanceA + delta));
 	},
 
 	envHas(clFlag) {
@@ -86,7 +86,7 @@ const utils = {
 	 * @author  Tim Down <https://stackoverflow.com/questions/5623838/#answer-5624139>
 	 */
 	hexToRgb(hex) {
-		var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+		const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
 		return result ? {
 			r: parseInt(result[1], 16),
 			g: parseInt(result[2], 16),
@@ -133,11 +133,11 @@ const utils = {
 	 */
 	luminance(hexColor) {
 		const color = utils.hexToRgb(hexColor);
-		var l = [color.r, color.g, color.b].map((v) => {
+		const l = [color.r, color.g, color.b].map(v => {
 			v /= 255;
-			return v <= 0.03928  ? v / 12.92 : Math.pow( (v + 0.055) / 1.055, 2.4 );
+			return v <= 0.03928 ? (v / 12.92) : Math.pow((v + 0.055) / 1.055, 2.4);
 		});
-		return l[0] * 0.2126 + l[1] * 0.7152 + l[2] * 0.0722;
+		return (0.2126 * l[0]) + (0.7152 * l[1]) + (0.0722 * l[2]);
 	},
 
 	mapEnvCsvVar(clFlag, defaults = []) {
@@ -145,11 +145,12 @@ const utils = {
 	},
 
 	matchAll(haystack, needle, flags = 'g') {
-		let match;
-		const matches = new Array();
+		const matches = [];
 		const rgx = new RegExp(needle, flags);
-		while (match = rgx.exec(haystack)) {
+		let match = rgx.exec(haystack);
+		while (match) {
 			matches.push(match);
+			match = rgx.exec(haystack);
 		}
 		return matches;
 	},
@@ -166,8 +167,14 @@ const utils = {
 	 * @author  Pimp Trizkit <https://stackoverflow.com/questions/5560248/#answer-13542669> (v2-hex);
 	 */
 	shadeColor(hexColor, percent) {
-	    const f = parseInt(hexColor.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
-	    return '#'+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+		const f = parseInt(hexColor.slice(1), 16);
+		const t = (percent < 0) ? 0 : 255;
+		const p = (percent < 0) ? (percent * -1) : percent;
+		const R = f >> 16;
+		const G = (f >> 8) & 0x00FF;
+		const B = f & 0x0000FF;
+		return '#' + (0x1000000 + ((Math.round((t - R) * p) + R) * 0x10000) +
+			((Math.round((t - G) * p) + G) * 0x100) + (Math.round((t - B) * p) + B)).toString(16).slice(1);
 	},
 
 	stringify(item, prettify = false, pads = '') {
@@ -176,7 +183,7 @@ const utils = {
 			case '[object Array]':
 			case '[object Object]': {
 				const isObject = (type === '[object Object]');
-				let keys = Object.keys(item);
+				const keys = Object.keys(item);
 				if (isObject) {
 					keys.sort();
 				}
@@ -196,13 +203,13 @@ const utils = {
 				const childPads = pads + text.blank.repeat(maxLength) + text.blank + text.indent;
 				keys.forEach(key => {
 					const paddedKey = pads + text.indent + `${key}:`.padStart(maxLength);
-					v += (prettify ? chalk.gray(paddedKey) : paddedKey) + text.blank
-						+ utils.stringify(item[key], prettify, childPads) + text.lf;
+					v += (prettify ? chalk.gray(paddedKey) : paddedKey) + text.blank +
+						utils.stringify(item[key], prettify, childPads) + text.lf;
 				});
 
-				return prettify
-					? (chalk.gray(opening) + text.lf + v + chalk.gray(ending))
-					: (opening + text.lf + v + ending);
+				return prettify ?
+					(chalk.gray(opening) + text.lf + v + chalk.gray(ending)) :
+					(opening + text.lf + v + ending);
 			}
 
 			case '[object Boolean]': {
@@ -223,8 +230,16 @@ const utils = {
 				return prettify ? chalk.yellow(`${item}`) : `${item}`;
 			}
 
-			// TODO [object Date], [object Error], [object Function], [object Map], [object Promise]
+			case '[object Error]': {
+				// TODO Here is where we should prettify the error stack.
+				return item.toString();
+			}
+
+			// TODO There are more tyypes that should probably be considered:
+			//   [object Date], [object Function], [object Map], [object Promise]
 			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+			default:
+				throw new Error(`Don't know how to stringify the type "${type}"`);
 		}
 	},
 
@@ -255,7 +270,7 @@ const utils = {
 		}
 
 		return args;
-	},
+	}
 };
 
 module.exports = utils;

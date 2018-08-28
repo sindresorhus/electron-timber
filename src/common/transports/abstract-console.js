@@ -1,11 +1,11 @@
 'use strict';
 
-const {defaults, hookableMethods} = require('../constants');
+const {hookableMethods} = require('../constants');
 
 class AbstractConsoleTransport {
 	constructor(options, loggerName, isDefaultLogger, rendererID) {
 		if (this.constructor === AbstractConsoleTransport) {
-			throw new Error("Can't instantiate abstract class `AbstractConsoleTransport`!");
+			throw new Error('Can\'t instantiate abstract class `AbstractConsoleTransport`!');
 		}
 
 		this._id = rendererID;
@@ -36,7 +36,7 @@ class AbstractConsoleTransport {
 	get type() {
 		return AbstractConsoleTransport.type;
 	}
-};
+}
 
 AbstractConsoleTransport._nativeConsole = {};
 AbstractConsoleTransport._backupNativeConsole = () => {
@@ -44,8 +44,7 @@ AbstractConsoleTransport._backupNativeConsole = () => {
 		AbstractConsoleTransport._nativeConsole[fn] = console[fn];
 	});
 	return Object.assign({}, AbstractConsoleTransport._nativeConsole);
-}
-
+};
 
 AbstractConsoleTransport.type = 'console';
 

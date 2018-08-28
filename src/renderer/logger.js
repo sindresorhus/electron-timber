@@ -5,9 +5,7 @@ const {existsSync} = require('fs');
 const {join} = require('path');
 
 const {appProjectFile, channel, defaults, padBwIdDigits, side, text} = require('../common/constants');
-const TimberLogger = require('../common/AbstractLogger');
-
-let logger;
+const TimberLogger = require('../common/abstract-logger');
 
 class TimberRenderer extends TimberLogger {
 	/**
@@ -20,13 +18,13 @@ class TimberRenderer extends TimberLogger {
 	_calcPads() {
 		this._pads = {
 			left: text.blank.repeat(TimberLogger._maxNameLength - this.name.length),
-			right: (this._id === null)
-				? text.blank.repeat(padBwIdDigits + 1)
-				: text.blank.repeat(padBwIdDigits - `${this._id}`.length),
+			right: (this._id === null) ?
+				text.blank.repeat(padBwIdDigits + 1) :
+				text.blank.repeat(padBwIdDigits - `${this._id}`.length)
 		};
 	}
 
-	_checkNameLength(buildContexts = false, loggerName = this.name, rendererID = this._id) {
+	_checkNameLength(buildContexts = false) {
 		if (buildContexts) {
 			this._buildContexts(TimberLogger._maxNameLength);
 		}
@@ -53,7 +51,7 @@ class TimberRenderer extends TimberLogger {
 				ipcRenderer.send(bwLoggerChannel, {
 					color: this._color,
 					levels: this._levels,
-					options: this._initialOptions,
+					options: this._initialOptions
 				});
 			});
 		}
@@ -66,7 +64,7 @@ class TimberRenderer extends TimberLogger {
 		// re-create it in this same browserWindow.
 		const instances = TimberLogger._loggers.get(this.name) || {
 			main: null,
-			renderer: {},
+			renderer: {}
 		};
 		instances.renderer[this._id] = this;
 		TimberLogger._loggers.set(this.name, instances);
@@ -113,7 +111,7 @@ class TimberRenderer extends TimberLogger {
 	setDefaults(newDefaults = {}) {
 		const {rebuild, maxNameLength} = ipcRenderer.sendSync(channel.defaults, newDefaults, {
 			logger: this.name,
-			wid: this._id,
+			wid: this._id
 		});
 		this._update(rebuild, maxNameLength);
 		return rebuild;
@@ -148,9 +146,12 @@ function remoteRequireDefaultMainLogger() {
 	remote.require(mainLoggerAbspath);
 }
 
+// eslint-disable-next-line prefer-const
+let defaultLogger;
+
 TimberRenderer._initOnce = () => {
 	let bw = remote.getCurrentWindow();
-	if (logger || !bw) {
+	if (defaultLogger || !bw) {
 		return;
 	}
 
@@ -161,7 +162,7 @@ TimberRenderer._initOnce = () => {
 
 	// Watch out when the browserWindow gets closed...
 	// we have to update our internal registry!
-	const callback = (event) => {
+	const callback = () => {
 		ipcRenderer.send(channel.removeRendererLogger, TimberLogger._id);
 
 		// Loop over all registered ipcRenderer channels and remove those belonging to timber.
@@ -169,7 +170,7 @@ TimberRenderer._initOnce = () => {
 			if (listeningChannel.startsWith(channel._prefix)) {
 				ipcRenderer.removeAllListeners(listeningChannel);
 			}
-		})
+		});
 
 		bw = undefined; // Remove window ref.
 	};
@@ -179,7 +180,7 @@ TimberRenderer._initOnce = () => {
 	// bw.once('close', callback);
 	// bw.once('closed', callback);
 	// bw.webContents.once('destroyed', callback);
-	window.onbeforeunload = callback;
+	window.addEventListener('beforeunload', callback);
 
 	// Ensure `timber [main]` exists, even when requiring `timber` for first time from a renderer!
 	if (remote.ipcMain.listenerCount(channel.config) === 0) {
@@ -187,6 +188,6 @@ TimberRenderer._initOnce = () => {
 	}
 };
 
-logger = new TimberRenderer({name: defaults.logger});
+defaultLogger = new TimberRenderer({name: defaults.logger});
 
-module.exports = logger;
+module.exports = defaultLogger;

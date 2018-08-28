@@ -18,24 +18,23 @@ const ignoreLoggers = mapEnvCsvVar(env.TIMBER_LOGGERS);
 if (is.main && !has(global, defaults.nameSpace)) {
 	const defLevels = defaults.levels;
 	global[defaults.nameSpace] = {
-		collector: 'main', // `false|main|renderer|ID`
-		devToolsDarkTheme: false, // false|true
-		ignore: [], // string[]
+		collector: 'main', // Allowed: false|main|renderer|ID
+		devToolsDarkTheme: false, // Allowed: boolean
+		ignore: [], // Allowed: string[]
 		logLevel: is.development ? defLevels.info.priority : defLevels.warn.priority,
-		muteElectronInspector: false, // false|true|non-negative int (priority)
-		prettify: 'context', // all|context|none
+		muteElectronInspector: false, // Allowed: boolean|non-negative int (priority)
+		prettify: 'context', // Allowed: all|context|none
 		separator: '›', // Any custom string
-		shouldHookConsole: false, // false|true
-		timestamp: false, // false|iso|time
-		transports: ['console'], // Array<string|object>
+		shouldHookConsole: false, // Allowed: boolean
+		timestamp: false, // Allowed: false|iso|time
+		transports: ['console'] // Allowed: Array<string|object>
 	};
 }
-
 
 // Only default logger (`timber`) can capture the native console.
 function toggleHook(capture = false) {
 	const consoleTransport = this._transports.find(t => (t.type === 'console'));
-	let backup = consoleTransport.getNativeConsoleBackup();
+	const backup = consoleTransport.getNativeConsoleBackup();
 	const randomMethod = hookableMethods[0];
 
 	if (capture) { // Enable ~> replace native console methods.
@@ -59,7 +58,7 @@ function toggleHook(capture = false) {
 			console[fn] = backup[fn];
 		});
 	}
-};
+}
 
 class AbstractTimberLogger {
 	/**
@@ -71,7 +70,7 @@ class AbstractTimberLogger {
 	*/
 	constructor(options, loggerSide, loggerPath) {
 		if (this.constructor === AbstractTimberLogger) {
-			throw new Error("Can't instantiate abstract class `AbstractTimberLogger`!");
+			throw new Error('Can\'t instantiate abstract class `AbstractTimberLogger`!');
 		}
 
 		this._initOnce();
@@ -85,7 +84,7 @@ class AbstractTimberLogger {
 		this._is = {
 			defaultLogger: options.name === defaults.logger,
 			enabled: !ignoreLoggers.has(options.name),
-			renderer: loggerSide === side.RENDERER,
+			renderer: loggerSide === side.RENDERER
 		};
 
 		autoBind(this);
@@ -141,7 +140,7 @@ class AbstractTimberLogger {
 			// Configure stuff specific to `timber [main/renderer]`.
 			this._toggleHook = toggleHook.bind(this);
 			this._toggleHook(this._options.shouldHookConsole);
-			// this._catchUnhandledExceptions();
+			// TODO this._catchUnhandledExceptions();
 		}
 	}
 
@@ -182,8 +181,8 @@ class AbstractTimberLogger {
 			const cache = {};
 			this._transports.forEach(t => {
 				const shouldPrettify = t.supportsPrettify && prettify !== 'none';
-				const finalArgs = cache[shouldPrettify ? 'pretty' : 'plain']
-					|| composeArgs(messageLevel, shouldPrettify, cache, args);
+				const finalArgs = cache[shouldPrettify ? 'pretty' : 'plain'] ||
+					composeArgs(messageLevel, shouldPrettify, cache, args);
 				t.report(messageLevel, finalArgs);
 			});
 		};
@@ -193,10 +192,13 @@ class AbstractTimberLogger {
 			stream.setEncoding('utf8');
 
 			stream.pipe(split()).on('data', (...data) => {
+				if (!this._shouldLog(data)) {
+					return;
+				}
 				this._transports.forEach(t => {
 					const shouldPrettify = t.supportsPrettify && prettify !== 'none';
-					const finalData = cache[shouldPrettify ? 'pretty' : 'plain']
-						|| composeArgs(messageLevel, shouldPrettify, cache, data);
+					const finalData = cache[shouldPrettify ? 'pretty' : 'plain'] ||
+						composeArgs(messageLevel, shouldPrettify, cache, data);
 					t.report(messageLevel, finalData);
 				});
 			});
@@ -208,7 +210,8 @@ class AbstractTimberLogger {
 			}
 
 			const messageLevel = this._priority[level];
-			let helper, streamHelper;
+			let helper;
+			let streamHelper;
 
 			// Logger disabled, do nothing!
 			if (!this._is.enabled || messageLevel > logLevel) {
@@ -219,20 +222,18 @@ class AbstractTimberLogger {
 					if (this._shouldLog(args)) {
 						logTransports(messageLevel, args);
 					}
-				}
-				streamHelper = (stream, ...args) => {
-					if (this._shouldLog(args)) {
-						streamLogTransports(messageLevel, stream);
-					}
-				}
+				};
+				streamHelper = stream => {
+					streamLogTransports(messageLevel, stream);
+				};
 			// No patterns to ignore, so each transport can report directly.
 			} else {
 				helper = (...args) => {
 					logTransports(messageLevel, args);
 				};
-				streamHelper = (stream, ...args) => {
+				streamHelper = stream => {
 					streamLogTransports(messageLevel, stream);
-				}
+				};
 			}
 
 			this[level] = helper;
@@ -258,7 +259,7 @@ class AbstractTimberLogger {
 					this._timers.delete(label);
 					logTransports(timerPriority, args);
 				}
-			}
+			};
 		}
 	}
 
@@ -285,8 +286,8 @@ class AbstractTimberLogger {
 		this._context = {
 			plain: {
 				main: [context],
-				renderer: [context],
-			},
+				renderer: [context]
+			}
 		};
 
 		// `pretty` only covers `prettify="context"`, since the separator (and
@@ -299,7 +300,7 @@ class AbstractTimberLogger {
 			main: [`${pads.left}${this._chalkStyle.logger(name)} [${this._chalkStyle.main(sideContext)}]${pads.right}`],
 			// This another prints to browser console (renderer process), so we rely on CSS to colorize text.
 			renderer: [`${pads.left}${ph}${name}${ph} [${ph}${sideContext}${ph}]${pads.right}`].concat(
-				[`color:${this._color.logger};`, cssBrackets, `color:${this._color[_side]};`, cssBrackets]),
+				[`color:${this._color.logger};`, cssBrackets, `color:${this._color[_side]};`, cssBrackets])
 		};
 
 		// Leading blanks get stripped automatically when printed to a browser console.
@@ -356,14 +357,19 @@ class AbstractTimberLogger {
 		// the user can activate 'Show timestamps' on 'Console settings' inside devTools.
 		let ts;
 		switch (mode) {
-			case 'iso':  ts = new Date().toISOString(); break;
-			case 'time': ts = new Date().toLocaleTimeString(); break;
-			default: throw new Error(`Unsupported value provided for option \`timestamp\`: ${mode}`);
+			case 'iso': {
+				ts = new Date().toISOString();
+				break;
+			}
+			case 'time': {
+				ts = new Date().toLocaleTimeString();
+				break;
+			}
+			default:
+				throw new Error(`Unsupported value provided for option \`timestamp\`: ${mode}`);
 		}
 		ts = `[${ts}]`;
 		args.main[0] = (shouldPrettify ? chalk.dim(ts) : ts) + text.blank + args.main[0];
-		// args.renderer[0] = `%c[${ts}]%c ${args.renderer[0]}`;
-		// args.renderer.splice(1, 0, css.dim, css.reset);
 	}
 
 	/**
@@ -396,7 +402,7 @@ class AbstractTimberLogger {
 		const privateColors = {
 			main: (new Randoma({seed: 'MAIN'})).color().hex().toString(),
 			renderer: (new Randoma({seed: 'RENDERER'})).color().hex().toString(),
-			logger: (new Randoma({seed: this.name})).color().hex().toString(),
+			logger: (new Randoma({seed: this.name})).color().hex().toString()
 		};
 		Object.keys(privateColors).forEach(item => {
 			this._chalkStyle[item] = chalk.hex(privateColors[item]);
@@ -409,7 +415,7 @@ class AbstractTimberLogger {
 		Object.keys(levels).forEach(levelName => {
 			const priority = parseInt(levels[levelName].priority, 10);
 			if (isNaN(priority)) {
-				throw new Error(`Invalid priority provided for log level "${levelName}": ${levels[levelName].priority}`);
+				throw new TypeError(`Invalid priority provided for log level "${levelName}": ${levels[levelName].priority}`);
 			}
 
 			if (!/^#[0-9a-fA-F]{6}$/i.test(levels[levelName].color)) {
@@ -442,7 +448,7 @@ class AbstractTimberLogger {
 
 				const contrast = {
 					current: contrastRatio(bgColorLuminance, levelColorLuminance),
-					previous: null,
+					previous: null
 				};
 				if (contrast.current >= 4.5) {
 					return; // No lighten/darken needed.
@@ -472,7 +478,7 @@ class AbstractTimberLogger {
 		this._transports = [];
 		this._options.transports.forEach(transport => {
 			const hasCustomOptions = !isString(transport);
-			const opts = hasCustomOptions ? opts : {};
+			const opts = hasCustomOptions ? transport : {};
 			const type = hasCustomOptions ? opts.type : transport;
 			this._transports.push(new mapTransport[type](
 				opts,
@@ -494,7 +500,7 @@ class AbstractTimberLogger {
 
 		if (ignore.length > 0) {
 			const msg = args.join(text.blank);
-			for (let p of ignore) {
+			for (const p of ignore) {
 				if (p.test(msg)) {
 					return false;
 				}
@@ -508,9 +514,9 @@ class AbstractTimberLogger {
 		const {separator, timestamp} = this._options;
 
 		const plain = {};
-		const loggerSide = this._is.renderer
-			? {from: side.RENDERER, to: side.MAIN}
-			: {from: side.MAIN, to: side.RENDERER};
+		const loggerSide = this._is.renderer ?
+			{from: side.RENDERER, to: side.MAIN} :
+			{from: side.MAIN, to: side.RENDERER};
 		plain[loggerSide.from] = [`${this._context.plain[loggerSide.from][0]} ${separator}`];
 		plain[loggerSide.to] = plain[loggerSide.from].slice(0);
 
@@ -547,12 +553,12 @@ class AbstractTimberLogger {
 
 		// Specific stuff.
 		if (prettify === 'all') {
-			pretty.main.push(...args.map(arg => (isString(arg)
-				? this._chalkStyle[levelPriority](arg)
-				: stringify(arg, true))));
+			pretty.main.push(...args.map(arg => (isString(arg) ?
+				this._chalkStyle[levelPriority](arg) :
+				stringify(arg, true))));
 
 			if (hasNoOwnStyles) {
-				for (let arg of args) {
+				for (const arg of args) {
 					if (isString(arg)) {
 						pretty.renderer[0] += ` ${arg}`;
 					} else {
@@ -588,8 +594,8 @@ class AbstractTimberLogger {
 		if (needsUpdate.helpers) {
 			this._bindLevelHelpers();
 		}
-		if (this._is.defaultLogger && hasMethod(this, '_toggleHook')
-			&& (needsUpdate.helpers || needsUpdate.shouldHookConsole)
+		if (this._is.defaultLogger && hasMethod(this, '_toggleHook') &&
+			(needsUpdate.helpers || needsUpdate.shouldHookConsole)
 		) {
 			this._toggleHook(this._options.shouldHookConsole);
 		}

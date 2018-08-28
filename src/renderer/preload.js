@@ -15,16 +15,16 @@ if (!/^chrome-(?:devtools|extension):\/\/.+$/.test(url)) {
 		logger._toggleHook(shouldHookConsole);
 	}
 } else if (!remote.getCurrentWindow()) {
-	const isElectronInspector = url.startsWith('chrome-devtools://devtools/bundled/inspector.html'
-		+ '?remoteBase=https://chrome-devtools-frontend.appspot.com/serve_file/');
+	const isElectronInspector = url.startsWith('chrome-devtools://devtools/bundled/inspector.html' +
+		'?remoteBase=https://chrome-devtools-frontend.appspot.com/serve_file/');
 	const logger = require('./logger'); // `timber [renderer]`.
-	const getPriority = (hookableMethod) => {
+	const getPriority = hookableMethod => {
 		switch (hookableMethod) {
 			case 'error': return 0;
 			case 'warn': return 1;
 			default: return 2;
 		}
-	}
+	};
 
 	// Replace chromium extension/devTools console to allow filtering undesired messages.
 	// Fixes https://github.com/sindresorhus/electron-timber/issues/13

@@ -2,7 +2,7 @@
 
 const {BrowserWindow, ipcMain} = require('electron');
 
-const ConsoleTransport = require('../../common/transports/AbstractConsole');
+const ConsoleTransport = require('../../common/transports/abstract-console');
 const {channel, defaults} = require('../../common/constants');
 
 class MainConsoleTransport extends ConsoleTransport {
@@ -14,7 +14,9 @@ class MainConsoleTransport extends ConsoleTransport {
 		const mainCollector = 'main';
 		const {collector} = global[defaults.nameSpace];
 		this._shouldResend = collector && (collector !== mainCollector || !this._isDefaultLogger);
-		if (this._shouldResend) return;
+		if (this._shouldResend) {
+			return;
+		}
 
 		// Remove existent listeners (if any)...
 		if (ipcMain.listenerCount(channel.collector) > 0) {
@@ -40,6 +42,6 @@ class MainConsoleTransport extends ConsoleTransport {
 		const method = this._getMethod(levelPriority);
 		this.getNativeConsoleBackup()[method](...args.main);
 	}
-};
+}
 
 module.exports = MainConsoleTransport;
