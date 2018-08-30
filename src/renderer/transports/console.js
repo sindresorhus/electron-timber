@@ -12,8 +12,8 @@ class RendererConsoleTransport extends ConsoleTransport {
 
 	_configCollect() {
 		const {collector} = remote.getGlobal(defaults.nameSpace);
-		this._shouldResend = collector && (collector !== this._id || !this._isDefaultLogger);
-		if (this._shouldResend) {
+		this._shouldResend = (collector !== this._id);
+		if (!this._isDefaultLogger || this._shouldResend) {
 			return;
 		}
 
