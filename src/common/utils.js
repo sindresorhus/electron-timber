@@ -1,11 +1,11 @@
 'use strict';
 
+const {inspect} = require('util');
 const {existsSync} = require('fs');
 const {dirname, join, relative, sep} = require('path');
 const callsites = require('callsites');
-const chalk = require('chalk');
 
-const {text} = require('./constants');
+const {inspectMainOptions, text} = require('./constants');
 
 const transports = [
 	'console'
@@ -116,6 +116,19 @@ const utils = {
 		return Object.prototype.toString.call(v) === '[object Object]';
 	},
 
+	isSimpleType(v) {
+		switch (Object.prototype.toString.call(v)) {
+			case '[object Boolean]':
+			case '[object Number]':
+			case '[object String]':
+			case '[object Null]':
+			case '[object Undefined]':
+				return true;
+			default:
+				return false;
+		}
+	},
+
 	/**
 	 * @summary Checks if `v` is a string (`true`) or not (`false`).
 	 * @param   {Any}     v The value to check.
@@ -144,19 +157,19 @@ const utils = {
 		return new Map(utils.envHas(clFlag) ? process.env[clFlag].split(',') : defaults);
 	},
 
-	matchAll(haystack, needle, flags = 'g') {
-		const matches = [];
-		const rgx = new RegExp(needle, flags);
-		let match = rgx.exec(haystack);
-		while (match) {
-			matches.push(match);
-			match = rgx.exec(haystack);
-		}
-		return matches;
-	},
-
 	oneOf(allowed, value) {
 		return allowed.some(valid => (valid === value));
+	},
+
+	prettifyMainArg(arg, colorize = false) {
+		const options = inspectMainOptions[colorize ? 'all' : 'none'];
+		if (utils.isString(arg)) {
+			return arg;
+		}
+		if (utils.isSimpleType(arg)) {
+			return inspect(arg, options);
+		}
+		return text.lf + inspect(arg, options);
 	},
 
 	/**
@@ -175,72 +188,6 @@ const utils = {
 		const B = f & 0x0000FF;
 		return '#' + (0x1000000 + ((Math.round((t - R) * p) + R) * 0x10000) +
 			((Math.round((t - G) * p) + G) * 0x100) + (Math.round((t - B) * p) + B)).toString(16).slice(1);
-	},
-
-	stringify(item, prettify = false, pads = '') {
-		const type = Object.prototype.toString.call(item);
-		switch (type) {
-			case '[object Array]':
-			case '[object Object]': {
-				const isObject = (type === '[object Object]');
-				const keys = Object.keys(item);
-				if (isObject) {
-					keys.sort();
-				}
-
-				let v = '';
-				if (keys.length === 0) {
-					v = isObject ? '{}' : '[]';
-					return prettify ? chalk.gray(v) : v;
-				}
-
-				const maxLength = keys.reduce(utils._calcMaxLength, 0) + 1;
-				let [opening, ending] = isObject ? ['{', '}'] : ['[', ']'];
-				if (pads) {
-					ending = pads + ending;
-				}
-
-				const childPads = pads + text.blank.repeat(maxLength) + text.blank + text.indent;
-				keys.forEach(key => {
-					const paddedKey = pads + text.indent + `${key}:`.padStart(maxLength);
-					v += (prettify ? chalk.gray(paddedKey) : paddedKey) + text.blank +
-						utils.stringify(item[key], prettify, childPads) + text.lf;
-				});
-
-				return prettify ?
-					(chalk.gray(opening) + text.lf + v + chalk.gray(ending)) :
-					(opening + text.lf + v + ending);
-			}
-
-			case '[object Boolean]': {
-				return prettify ? chalk.cyan(`${item}`) : `${item}`;
-			}
-
-			// NaN, integer, float
-			case '[object Number]': {
-				return prettify ? chalk.blue(`${item}`) : `${item}`;
-			}
-
-			case '[object String]': {
-				return prettify ? chalk.green(`${item}`) : `${item}`;
-			}
-
-			case '[object Null]':
-			case '[object Undefined]': {
-				return prettify ? chalk.yellow(`${item}`) : `${item}`;
-			}
-
-			case '[object Error]': {
-				// TODO Here is where we should prettify the error stack.
-				return item.toString();
-			}
-
-			// TODO There are more tyypes that should probably be considered:
-			//   [object Date], [object Function], [object Map], [object Promise]
-			// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
-			default:
-				throw new Error(`Don't know how to stringify the type "${type}"`);
-		}
 	},
 
 	/**

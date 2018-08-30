@@ -65,6 +65,20 @@ module.exports = {
 	},
 	hookableMethods: ['log', 'warn', 'error', 'time', 'timeEnd'],
 	noop() {},
+	inspectMainOptions: {
+		all: {
+			colors: true,
+			compact: false,
+			depth: Infinity,
+			maxArrayLength: Infinity
+		},
+		none: {
+			color: false,
+			compact: false,
+			depth: Infinity,
+			maxArrayLength: Infinity
+		}
+	},
 	padBwIdDigits: 2,
 	side: {
 		MAIN: 'main',

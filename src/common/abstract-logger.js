@@ -9,7 +9,7 @@ const split = require('split2');
 
 const {css, defaults, env, hookableMethods, noop, side, text} = require('./constants');
 const {capitalize, contrastRatio, getPackageName, getTransports, has, hasMethod, isNil, isObject,
-	isString, luminance, mapEnvCsvVar, shadeColor, stringify, stripCSS} = require('./utils');
+	isString, luminance, mapEnvCsvVar, prettifyMainArg, shadeColor, stripCSS} = require('./utils');
 
 const ignoreLoggers = mapEnvCsvVar(env.TIMBER_LOGGERS);
 
@@ -524,7 +524,7 @@ class AbstractTimberLogger {
 			this._prependTimestamp(timestamp, plain);
 		}
 
-		plain.main.push(...args.map(arg => (isString(arg) ? arg : stringify(arg))));
+		plain.main.push(...args.map(arg => prettifyMainArg(arg)));
 		plain.renderer.push(...args);
 
 		return plain;
@@ -555,7 +555,8 @@ class AbstractTimberLogger {
 		if (prettify === 'all') {
 			pretty.main.push(...args.map(arg => (isString(arg) ?
 				this._chalkStyle[levelPriority](arg) :
-				stringify(arg, true))));
+				prettifyMainArg(arg, true)
+			)));
 
 			if (hasNoOwnStyles) {
 				for (const arg of args) {
@@ -570,7 +571,7 @@ class AbstractTimberLogger {
 				pretty.renderer.push(...args);
 			}
 		} else {
-			pretty.main.push(...args.map(arg => stringify(arg)));
+			pretty.main.push(...args.map(arg => prettifyMainArg(arg)));
 			pretty.renderer[0] += ph;
 			pretty.renderer.push(css.reset, ...args);
 		}
