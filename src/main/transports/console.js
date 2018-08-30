@@ -32,8 +32,8 @@ class MainConsoleTransport extends ConsoleTransport {
 
 	report(levelPriority, args) {
 		if (this._shouldResend) {
-			const {collector: idCollector} = global[defaults.nameSpace];
-			const bwCollector = BrowserWindow.fromId(idCollector);
+			const idCollector = parseInt(global[defaults.nameSpace].collector, 10);
+			const bwCollector = isNaN(idCollector) ? null : BrowserWindow.fromId(idCollector);
 			if (bwCollector) {
 				bwCollector.webContents.send(channel.collector, levelPriority, args);
 			}
