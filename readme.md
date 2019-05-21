@@ -15,6 +15,8 @@ You can use this module directly in both the main and renderer process.
 $ npm install electron-timber
 ```
 
+*Requires Electron 5 or later.*
+
 <a href="https://www.patreon.com/sindresorhus">
 	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
 </a>
@@ -29,16 +31,19 @@ const {app, BrowserWindow} = require('electron');
 const logger = require('electron-timber');
 
 let mainWindow;
-app.on('ready', () => {
+
+(async () => {
+	await app.whenReady();
+
 	mainWindow = new BrowserWindow();
-	mainWindow.loadURL(…);
+	await mainWindow.loadURL(…);
 
 	logger.log('Main log');
 	logger.error('Main error');
 
 	const customLogger = logger.create({name: 'custom'});
 	customLogger.log('Custom log');
-});
+})();
 ```
 
 Renderer process:
@@ -101,7 +106,7 @@ You should initialize this on module load so prefix padding is consistent with t
 
 #### options
 
-Type: `Object`
+Type: `object`
 
 ##### name
 
@@ -131,9 +136,9 @@ Sets the default options (across `main` and `renderer` processes).
 
 #### options
 
-Type: `Object`
+Type: `object`
 
-Same as the `options` to `create()`.
+Same as the `options` for `create()`.
 
 
 ## Toggle loggers

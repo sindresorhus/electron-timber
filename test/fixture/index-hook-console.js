@@ -1,14 +1,16 @@
 'use strict';
-const electron = require('electron');
-const delay = require('delay');
+const {app, BrowserWindow} = require('electron');
 const logger = require('../..');
 
 let mainWindow;
-electron.app.on('ready', async () => {
-	mainWindow = new electron.BrowserWindow();
-	mainWindow.loadURL(`file://${__dirname}/index.html?test=hookConsole`);
 
-	let unhook = logger.hookConsole({ main: true, renderer: false });
+(async () => {
+	await app.whenReady();
+
+	mainWindow = new BrowserWindow();
+	await mainWindow.loadURL(`file://${__dirname}/index.html?test=hookConsole`);
+
+	let unhook = logger.hookConsole({main: true, renderer: false});
 	console.log('Main log console');
 	console.warn('Main warn console');
 	unhook();
@@ -27,7 +29,7 @@ electron.app.on('ready', async () => {
 	const customLogger = logger.create({name: 'custom', logLevel: 'info'});
 	try {
 		customLogger.hookConsole();
-	} catch (err) {
-		console.log(err.message);
+	} catch (error) {
+		console.log(error.message);
 	}
-});
+})();

@@ -1,18 +1,21 @@
 'use strict';
 const electron = require('electron');
-const {performance} = global.performance ? global : require('perf_hooks');
+const {performance} = require('perf_hooks');
 const path = require('path');
-const {is, appReady} = require('electron-util');
+const {is} = require('electron-util');
 const chalk = require('chalk');
 const split = require('split2');
 const Randoma = require('randoma');
 const autoBind = require('auto-bind');
+
+const {app} = electron;
 
 const logChannel = '__ELECTRON_TIMBER_LOG__';
 const warnChannel = '__ELECTRON_TIMBER_WARN__';
 const errorChannel = '__ELECTRON_TIMBER_ERROR__';
 const updateChannel = '__ELECTRON_TIMBER_UPDATE__';
 const defaultsNameSpace = '__ELECTRON_TIMBER_DEFAULTS__';
+
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
 const preloadScript = path.resolve(__dirname, 'preload.js');
 
@@ -239,6 +242,7 @@ logger.hookConsole = ({main, renderer} = {main: is.main, renderer: is.renderer})
 		if (isConsoleHooked) {
 			return unhookConsoleFn(hookThisConsole, shouldHookRenderers);
 		}
+
 		isConsoleHooked = true;
 
 		for (const key of hookableMethods) {
@@ -270,11 +274,13 @@ if (is.main) {
 			rendererLogger.log(...data);
 		});
 	}
+
 	if (electron.ipcMain.listenerCount(warnChannel) === 0) {
 		electron.ipcMain.on(warnChannel, (event, data) => {
 			rendererLogger.warn(...data);
 		});
 	}
+
 	if (electron.ipcMain.listenerCount(errorChannel) === 0) {
 		electron.ipcMain.on(errorChannel, (event, data) => {
 			rendererLogger.error(...data);
@@ -282,13 +288,15 @@ if (is.main) {
 	}
 
 	// Register a preload script so we know whenever a new renderer is created.
-	appReady.then(() => {
+	(async () => {
+		await app.whenReady();
+
 		const session = electron.session.defaultSession;
 		const currentPreloads = session.getPreloads();
 		if (!currentPreloads.includes(preloadScript)) {
 			session.setPreloads(currentPreloads.concat([preloadScript]));
 		}
-	});
+	})();
 } else if (is.renderer) {
 	if (electron.ipcRenderer.listenerCount(updateChannel) === 0) {
 		electron.ipcRenderer.on(updateChannel, (event, flag) => {

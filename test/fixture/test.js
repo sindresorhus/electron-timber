@@ -11,8 +11,9 @@ test.afterEach.always(async t => {
 });
 
 const newApplication = (t, testFile = '.') => {
-	const app = new Application({ path: electron, args: [testFile] });
-	return t.context.app = app;
+	const app = new Application({path: electron, args: [testFile]});
+	t.context.app = app;
+	return app;
 };
 
 const ignores = ['INFO:CONSOLE', 'DnsConfig', 'security-warnings.js'];
@@ -46,7 +47,7 @@ test('main', async t => {
 	t.regex(rendererLogs[2], /Renderer error/);
 });
 
-test.serial('toggle loggers', async t => {
+test('toggle loggers', async t => {
 	process.env.TIMBER_LOGGERS = 'renderer,custom';
 
 	const app = newApplication(t);
@@ -64,11 +65,11 @@ test.serial('toggle loggers', async t => {
 });
 
 test('logLevel', async t => {
-	const app = newApplication(t, 'index_logLevel.js');
+	const app = newApplication(t, 'index-log-level.js');
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
-	app.electron.ipcRenderer.send('setDefaults', { logLevel: 'error' });
+	app.electron.ipcRenderer.send('setDefaults', {logLevel: 'error'});
 
 	// Send some logs to the main process
 	app.electron.ipcRenderer.send('logger', 'log', 'log');
@@ -101,7 +102,7 @@ test('logLevel', async t => {
 });
 
 test('hookConsole', async t => {
-	const app = newApplication(t, 'index_hookConsole.js');
+	const app = newApplication(t, 'index-hook-console.js');
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 

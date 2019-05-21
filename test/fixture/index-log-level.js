@@ -8,18 +8,9 @@ let mainWindow;
 	await app.whenReady();
 
 	mainWindow = new BrowserWindow();
-	await mainWindow.loadURL(`file://${__dirname}/index.html`);
-
-	const {log} = logger;
-	log('Main log');
-
-	logger.warn('Main warn');
-	logger.error('Main error');
-	logger.time('Main timer');
-	logger.timeEnd('Main timer');
+	await mainWindow.loadURL(`file://${__dirname}/index.html?test=logLevel`);
 
 	const customLogger = logger.create({name: 'custom', logLevel: 'info'});
-	customLogger.log('Custom log');
 
 	ipc.on('setDefaults', (event, newDefaults) => {
 		logger.setDefaults(newDefaults);

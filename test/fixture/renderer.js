@@ -5,7 +5,7 @@ const logger = require('../..');
 const test = (new URLSearchParams(window.location.search)).get('test');
 
 // Run different code for different tests
-if (test == 'hookConsole') {
+if (test === 'hookConsole') {
 	let unhook = logger.hookConsole();
 	console.log('Renderer log console');
 	console.warn('Renderer warn console');
@@ -21,9 +21,9 @@ if (test == 'hookConsole') {
 	console.error('Renderer error console');
 	console.time('Renderer timer console');
 	console.timeEnd('Renderer timer console');
-} else if (test == 'logLevel') {
-	electron.ipcRenderer.on('logger', (event, method, ...args) => {
-		logger[method](...args);
+} else if (test === 'logLevel') {
+	electron.ipcRenderer.on('logger', (event, method, ...arguments_) => {
+		logger[method](...arguments_);
 	});
 } else {
 	logger.log('Renderer log');
