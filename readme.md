@@ -1,4 +1,4 @@
-# electron-timber [![Build Status](https://travis-ci.org/sindresorhus/electron-timber.svg?branch=master)](https://travis-ci.org/sindresorhus/electron-timber)
+# electron-timber
 
 > Pretty logger for Electron apps
 
