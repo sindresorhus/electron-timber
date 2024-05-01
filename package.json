@@ -4,10 +4,17 @@
 	"description": "Pretty logger for Electron apps",
 	"license": "MIT",
 	"repository": "sindresorhus/electron-timber",
+	"funding": "https://github.com/sponsors/sindresorhus",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
-		"url": "sindresorhus.com"
+		"url": "https://sindresorhus.com"
+	},
+	"type": "module",
+	"exports": "./index.js",
+	"sideEffects": false,
+	"engines": {
+		"node": ">=18"
 	},
 	"scripts": {
 		"// disabled until spectron is fixed // test": "xo && cd test/fixture && ava",
@@ -17,7 +24,7 @@
 	},
 	"files": [
 		"index.js",
-		"preload.js"
+		"preload.mjs"
 	],
 	"keywords": [
 		"electron",
@@ -37,19 +44,19 @@
 		"console"
 	],
 	"dependencies": {
-		"auto-bind": "^2.1.0",
-		"chalk": "^2.4.1",
-		"electron-util": "^0.11.0",
-		"randoma": "^1.2.0",
-		"split2": "^3.1.1"
+		"auto-bind": "^5.0.1",
+		"chalk": "^5.3.0",
+		"electron-util": "^0.18.1",
+		"randoma": "^2.0.0",
+		"split2": "^4.2.0"
 	},
 	"devDependencies": {
-		"ava": "^1.4.1",
-		"delay": "^4.2.0",
-		"electron": "^5.0.1",
-		"spectron": "^5.0.0",
+		"ava": "^6.1.2",
+		"delay": "^6.0.0",
+		"electron": "^30.0.1",
+		"spectron": "^19.0.0",
 		"svg-term-cli": "^2.1.1",
-		"xo": "^0.24.0"
+		"xo": "^0.58.0"
 	},
 	"xo": {
 		"envs": [

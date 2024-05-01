@@ -1,14 +1,14 @@
-'use strict';
-const {app, BrowserWindow, ipcMain: ipc} = require('electron');
-const logger = require('../..');
+import {app, BrowserWindow, ipcMain as ipc} from 'electron';
+import logger from '../../index.js';
 
 let mainWindow;
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 (async () => {
 	await app.whenReady();
 
 	mainWindow = new BrowserWindow();
-	await mainWindow.loadURL(`file://${__dirname}/index.html?test=logLevel`);
+	await mainWindow.loadURL(`file://${import.meta.dirname}/index.html?test=logLevel`);
 
 	const customLogger = logger.create({name: 'custom', logLevel: 'info'});
 

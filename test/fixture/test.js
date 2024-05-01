@@ -1,4 +1,5 @@
-/* eslint-disable import/no-extraneous-dependencies */
+
+import process from 'node:process';
 import electron from 'electron';
 import {serial as test} from 'ava';
 import {Application} from 'spectron';
@@ -10,7 +11,7 @@ test.afterEach.always(async t => {
 	}
 });
 
-const newApplication = (t, testFile = '.') => {
+const newApp = (t, testFile = '.') => {
 	const app = new Application({path: electron, args: [testFile]});
 	t.context.app = app;
 	return app;
@@ -20,7 +21,7 @@ const ignores = ['INFO:CONSOLE', 'DnsConfig', 'security-warnings.js'];
 const cleanLogs = logs => logs.filter(log => ignores.every(x => !log.includes(x)));
 
 test('main', async t => {
-	const app = newApplication(t);
+	const app = newApp(t);
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
@@ -50,7 +51,7 @@ test('main', async t => {
 test('toggle loggers', async t => {
 	process.env.TIMBER_LOGGERS = 'renderer,custom';
 
-	const app = newApplication(t);
+	const app = newApp(t);
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
@@ -65,7 +66,7 @@ test('toggle loggers', async t => {
 });
 
 test('logLevel', async t => {
-	const app = newApplication(t, 'index-log-level.js');
+	const app = newApp(t, 'index-log-level.js');
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 
@@ -102,7 +103,7 @@ test('logLevel', async t => {
 });
 
 test('hookConsole', async t => {
-	const app = newApplication(t, 'index-hook-console.js');
+	const app = newApp(t, 'index-hook-console.js');
 	await app.start();
 	await app.client.waitUntilWindowLoaded();
 

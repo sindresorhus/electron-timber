@@ -8,23 +8,21 @@ By default, logs from the renderer process don't show up in the terminal. Now th
 
 You can use this module directly in both the main and renderer process.
 
-
 ## Install
 
-```
-$ npm install electron-timber
+```sh
+npm install electron-timber
 ```
 
-*Requires Electron 5 or later.*
-
+*Requires Electron 30 or later.*
 
 ## Usage
 
 Main process:
 
 ```js
-const {app, BrowserWindow} = require('electron');
-const logger = require('electron-timber');
+import {app, BrowserWindow} from 'electron';
+import logger from 'electron-timber';
 
 let mainWindow;
 
@@ -45,12 +43,11 @@ let mainWindow;
 Renderer process:
 
 ```js
-const logger = require('electron-timber');
+import logger from 'electron-timber';
 
 logger.log('Renderer log');
 logger.error('Renderer error');
 ```
-
 
 ## API
 
@@ -94,7 +91,7 @@ Same as `streamLog`, but logs using `console.warn` instead.
 
 Same as `streamLog`, but logs using `console.error` instead.
 
-### create([options])
+### create(options?)
 
 Create a custom logger instance.
 
@@ -126,7 +123,7 @@ Can be `info` (log everything), `warn` (log warnings and errors), or `error` (lo
 
 Gets the default options (across `main` and `renderer` processes).
 
-### setDefaults([options]) <sup><small>*Main process only*</small></sup>
+### setDefaults(options?) <sup><small>*Main process only*</small></sup>
 
 Sets the default options (across `main` and `renderer` processes).
 
@@ -136,7 +133,6 @@ Type: `object`
 
 Same as the `options` for `create()`.
 
-
 ## Toggle loggers
 
 You can show the output of only a subset of the loggers using the environment variable `TIMBER_LOGGERS`. Here we show the output of the default `renderer` logger and a custom `unicorn` logger, but not the default `main` logger:
@@ -144,7 +140,6 @@ You can show the output of only a subset of the loggers using the environment va
 ```sh
 TIMBER_LOGGERS=renderer,unicorn electron .
 ```
-
 
 ## Related
 
@@ -155,14 +150,3 @@ TIMBER_LOGGERS=renderer,unicorn electron .
 - [electron-context-menu](https://github.com/sindresorhus/electron-context-menu) - Context menu for your Electron app
 - [electron-dl](https://github.com/sindresorhus/electron-dl) - Simplified file downloads for your Electron app
 - [electron-unhandled](https://github.com/sindresorhus/electron-unhandled) - Catch unhandled errors and promise rejections in your Electron app
-
-
-## Maintainers
-
-- [Sindre Sorhus](https://github.com/sindresorhus)
-- [@acheronfail](https://github.com/acheronfail)
-
-
-## License
-
-MIT

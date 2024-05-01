@@ -1,6 +1,5 @@
-'use strict';
-const electron = require('electron');
-const logger = require('../..');
+import electron from 'electron';
+import logger from '../../index.js';
 
 const test = (new URLSearchParams(window.location.search)).get('test');
 

@@ -1,12 +1,12 @@
-'use strict';
-const electron = require('electron');
-const {performance} = require('perf_hooks');
-const path = require('path');
-const {is} = require('electron-util');
-const chalk = require('chalk');
-const split = require('split2');
-const Randoma = require('randoma');
-const autoBind = require('auto-bind');
+import process from 'node:process';
+import electron from 'electron';
+import {performance} from 'node:perf_hooks';
+import path from 'node:path';
+import {is} from 'electron-util';
+import chalk from 'chalk';
+import split from 'split2';
+import Randoma from 'randoma';
+import autoBind from 'auto-bind';
 
 const {app} = electron;
 
@@ -17,46 +17,61 @@ const updateChannel = '__ELECTRON_TIMBER_UPDATE__';
 const defaultsNameSpace = '__ELECTRON_TIMBER_DEFAULTS__';
 
 const filteredLoggers = process.env.TIMBER_LOGGERS && new Set(process.env.TIMBER_LOGGERS.split(','));
-const preloadScript = path.resolve(__dirname, 'preload.js');
+const preloadScript = path.resolve(import.meta.dirname, 'preload.mjs');
 
 const logLevels = {
 	info: 0,
 	warn: 1,
-	error: 2
+	error: 2,
 };
 
 if (is.main) {
 	global[defaultsNameSpace] = {
 		ignore: null,
 		shouldHookConsole: false,
-		logLevel: is.development ? logLevels.info : logLevels.warn
+		logLevel: is.development ? logLevels.info : logLevels.warn,
 	};
 }
 
 // Flag to indicate whether the console has been hooked or not
 let isConsoleHooked = false;
 const _console = {};
-const hookableMethods = ['log', 'warn', 'error', 'time', 'timeEnd'];
+
+const hookableMethods = [
+	'log',
+	'warn',
+	'error',
+	'time',
+	'timeEnd',
+];
 
 let longestNameLength = 0;
 
 class Timber {
+	#timers = new Map();
+	#initialOptions;
+	#isEnabled;
+	#name;
+	#prefixColor;
+
 	constructor(options = {}) {
 		autoBind(this);
 
-		this._initialOptions = options;
-		this.isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
-		this.name = options.name || '';
-		this._prefixColor = (new Randoma({seed: `${this.name}x`})).color().hex().toString();
-		this._timers = new Map();
+		this.#initialOptions = options;
+		this.#isEnabled = filteredLoggers && options.name ? filteredLoggers.has(options.name) : true;
+		this.#name = options.name ?? '';
+		this.#prefixColor = (new Randoma({seed: `${this.#name}x`})).color().hex().toString();
 
-		if (this.name.length > longestNameLength) {
-			longestNameLength = this.name.length;
+		if (this.#name.length > longestNameLength) {
+			longestNameLength = this.#name.length;
 		}
 	}
 
 	get _options() {
-		return Object.assign({}, this.getDefaults(), this._initialOptions);
+		return {
+			...this.getDefaults(),
+			...this.#initialOptions,
+		};
 	}
 
 	get _console() {
@@ -64,97 +79,97 @@ class Timber {
 	}
 
 	_getPrefix() {
-		return chalk.hex(this._prefixColor)(this.name.padStart(longestNameLength));
+		return chalk.hex(this.#prefixColor)(this.#name.padStart(longestNameLength));
 	}
 
-	log(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
+	log(...arguments_) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
 		if (is.renderer) {
-			electron.ipcRenderer.send(logChannel, args);
-		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
+			electron.ipcRenderer.send(logChannel, arguments_);
+		} else if (this.#name) {
+			arguments_.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
 		}
 
-		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(arguments_.join(' '))) {
 			return;
 		}
 
-		this._console.log(...args);
+		this._console.log(...arguments_);
 	}
 
-	warn(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
+	warn(...arguments_) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.warn) {
 			return;
 		}
 
 		if (is.renderer) {
-			electron.ipcRenderer.send(warnChannel, args);
-		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.yellow('›'));
+			electron.ipcRenderer.send(warnChannel, arguments_);
+		} else if (this.#name) {
+			arguments_.unshift(this._getPrefix() + ' ' + chalk.yellow('›'));
 		}
 
-		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(arguments_.join(' '))) {
 			return;
 		}
 
-		this._console.warn(...args);
+		this._console.warn(...arguments_);
 	}
 
-	error(...args) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
+	error(...arguments_) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
 		if (is.renderer) {
-			electron.ipcRenderer.send(errorChannel, args);
-		} else if (this.name) {
-			args.unshift(this._getPrefix() + ' ' + chalk.red('›'));
+			electron.ipcRenderer.send(errorChannel, arguments_);
+		} else if (this.#name) {
+			arguments_.unshift(this._getPrefix() + ' ' + chalk.red('›'));
 		}
 
-		if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+		if (this._options.ignore && this._options.ignore.test(arguments_.join(' '))) {
 			return;
 		}
 
-		this._console.error(...args);
+		this._console.error(...arguments_);
 	}
 
 	time(label = 'default') {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
-		this._timers.set(label, performance.now());
+		this.#timers.set(label, performance.now());
 	}
 
 	timeEnd(label = 'default') {
-		if (!this.isEnabled) {
+		if (!this.#isEnabled) {
 			return;
 		}
 
-		if (this._timers.has(label)) {
-			const prev = this._timers.get(label);
-			const args = [label + ': ' + (performance.now() - prev) + 'ms'];
-			this._timers.delete(label);
+		if (this.#timers.has(label)) {
+			const previous = this.#timers.get(label);
+			const arguments_ = [label + ': ' + (performance.now() - previous) + 'ms'];
+			this.#timers.delete(label);
 
 			if (is.renderer) {
-				electron.ipcRenderer.send(logChannel, args);
-			} else if (this.name) {
-				args.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
+				electron.ipcRenderer.send(logChannel, arguments_);
+			} else if (this.#name) {
+				arguments_.unshift(this._getPrefix() + ' ' + chalk.dim('›'));
 			}
 
-			if (this._options.ignore && this._options.ignore.test(args.join(' '))) {
+			if (this._options.ignore && this._options.ignore.test(arguments_.join(' '))) {
 				return;
 			}
 
-			this._console.log(...args);
+			this._console.log(...arguments_);
 		}
 	}
 
 	streamLog(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.info) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.info) {
 			return;
 		}
 
@@ -165,7 +180,7 @@ class Timber {
 	}
 
 	streamWarn(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.warn) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.warn) {
 			return;
 		}
 
@@ -176,7 +191,7 @@ class Timber {
 	}
 
 	streamError(stream) {
-		if (!this.isEnabled || this._options.logLevel > logLevels.error) {
+		if (!this.#isEnabled || this._options.logLevel > logLevels.error) {
 			return;
 		}
 
@@ -186,13 +201,13 @@ class Timber {
 		});
 	}
 
-	create(...args) {
-		return new Timber(...args);
+	create(...arguments_) {
+		return new Timber(...arguments_);
 	}
 
 	getDefaults() {
 		const defaults = is.main ? global[defaultsNameSpace] : electron.remote.getGlobal(defaultsNameSpace);
-		return Object.assign({}, defaults);
+		return {...defaults};
 	}
 
 	setDefaults(newDefaults = {}) {
@@ -211,10 +226,10 @@ class Timber {
 }
 
 const logger = new Timber({
-	name: is.main ? 'main' : null
+	name: is.main ? 'main' : null,
 });
 
-const unhookConsoleFn = (hookThisConsole, shouldHookRenderers) => () => {
+const unhookConsoleFunction = (hookThisConsole, shouldHookRenderers) => () => {
 	if (isConsoleHooked) {
 		if (hookThisConsole) {
 			isConsoleHooked = false;
@@ -230,6 +245,7 @@ const unhookConsoleFn = (hookThisConsole, shouldHookRenderers) => () => {
 	}
 };
 
+// eslint-disable-next-line unicorn/no-object-as-default-parameter
 logger.hookConsole = ({main, renderer} = {main: is.main, renderer: is.renderer}) => {
 	if (main && is.renderer) {
 		throw new Error('You cannot hook the console in the main process from a renderer process.');
@@ -240,7 +256,7 @@ logger.hookConsole = ({main, renderer} = {main: is.main, renderer: is.renderer})
 
 	if (hookThisConsole) {
 		if (isConsoleHooked) {
-			return unhookConsoleFn(hookThisConsole, shouldHookRenderers);
+			return unhookConsoleFunction(hookThisConsole, shouldHookRenderers);
 		}
 
 		isConsoleHooked = true;
@@ -255,7 +271,7 @@ logger.hookConsole = ({main, renderer} = {main: is.main, renderer: is.renderer})
 		hookRenderers(true);
 	}
 
-	return unhookConsoleFn(hookThisConsole, shouldHookRenderers);
+	return unhookConsoleFunction(hookThisConsole, shouldHookRenderers);
 };
 
 function hookRenderers(flag) {
@@ -288,29 +304,28 @@ if (is.main) {
 	}
 
 	// Register a preload script so we know whenever a new renderer is created.
+	// eslint-disable-next-line unicorn/prefer-top-level-await
 	(async () => {
 		await app.whenReady();
 
 		const session = electron.session.defaultSession;
 		const currentPreloads = session.getPreloads();
 		if (!currentPreloads.includes(preloadScript)) {
-			session.setPreloads(currentPreloads.concat([preloadScript]));
+			session.setPreloads([...currentPreloads, preloadScript]);
 		}
 	})();
-} else if (is.renderer) {
-	if (electron.ipcRenderer.listenerCount(updateChannel) === 0) {
-		electron.ipcRenderer.on(updateChannel, (event, flag) => {
-			if (flag) {
-				logger.hookConsole();
-			} else {
-				isConsoleHooked = false;
-				for (const key of hookableMethods) {
-					console[key] = _console[key];
-					_console[key] = null;
-				}
+} else if (is.renderer && electron.ipcRenderer.listenerCount(updateChannel) === 0) {
+	electron.ipcRenderer.on(updateChannel, (event, flag) => {
+		if (flag) {
+			logger.hookConsole();
+		} else {
+			isConsoleHooked = false;
+			for (const key of hookableMethods) {
+				console[key] = _console[key];
+				_console[key] = null;
 			}
-		});
-	}
+		}
+	});
 }
 
-module.exports = logger;
+export default logger;
