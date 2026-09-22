@@ -44,7 +44,7 @@ let mainWindow;
 })();
 ```
 
-Renderer process (requires `nodeIntegration: true` in `webPreferences`):
+Renderer process:
 
 ```js
 import logger from 'electron-timber';
@@ -54,6 +54,8 @@ logger.error('Renderer error');
 ```
 
 No `preload` setup is needed. The module registers its own preload script via [`session.registerPreloadScript()`](https://www.electronjs.org/docs/latest/api/session#sesregisterpreloadscriptscript) to share defaults with renderers.
+
+Works with bundlers like Vite (including [electron-vite](https://electron-vite.org/)). The renderer entry is browser-only and never bundles Node.js or Electron main-process APIs, so `nodeIntegration` is not required. If your bundler needs it to be explicit, import `electron-timber/renderer` in the renderer and `electron-timber/main` in the main process.
 
 ## API
 

@@ -10,7 +10,17 @@
 	"exports": {
 		".": {
 			"types": "./index.d.ts",
+			"browser": "./lib/renderer.js",
+			"node": "./lib/main.js",
 			"default": "./index.js"
+		},
+		"./main": {
+			"types": "./index.d.ts",
+			"default": "./lib/main.js"
+		},
+		"./renderer": {
+			"types": "./index.d.ts",
+			"default": "./lib/renderer.js"
 		}
 	},
 	"sideEffects": true,
