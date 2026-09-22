@@ -1,7 +1,8 @@
-import electron from 'electron';
 import logger from '../../index.js';
+import {bridgeNamespace} from '../../lib/common.js';
 
-const test = (new URLSearchParams(window.location.search)).get('test');
+const test = (new URLSearchParams(globalThis.location.search)).get('test');
+const bridge = globalThis[bridgeNamespace];
 
 // Run different code for different tests
 if (test === 'hookConsole') {
@@ -21,7 +22,7 @@ if (test === 'hookConsole') {
 	console.time('Renderer timer console');
 	console.timeEnd('Renderer timer console');
 } else if (test === 'logLevel') {
-	electron.ipcRenderer.on('logger', (event, method, ...arguments_) => {
+	bridge?.on('logger', (method, ...arguments_) => {
 		logger[method](...arguments_);
 	});
 } else {

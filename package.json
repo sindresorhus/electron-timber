@@ -5,25 +5,27 @@
 	"license": "MIT",
 	"repository": "sindresorhus/electron-timber",
 	"funding": "https://github.com/sponsors/sindresorhus",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "https://sindresorhus.com"
-	},
+	"author": "Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)",
 	"type": "module",
-	"exports": "./index.js",
-	"sideEffects": false,
+	"exports": {
+		".": {
+			"types": "./index.d.ts",
+			"default": "./index.js"
+		}
+	},
+	"sideEffects": true,
 	"engines": {
-		"node": ">=18"
+		"node": ">=22.12"
 	},
 	"scripts": {
-		"// disabled until spectron is fixed // test": "xo && cd test/fixture && ava",
-		"test": "xo",
+		"test": "xo && node --test test/*.test.js",
 		"start": "electron test/fixture",
 		"make-screenshot": "svg-term --at=2000 --command=\"electron test/fixture\" --out=screenshot.svg --window --no-cursor --height=8"
 	},
 	"files": [
 		"index.js",
+		"index.d.ts",
+		"lib",
 		"preload.mjs"
 	],
 	"keywords": [
@@ -45,23 +47,13 @@
 	],
 	"dependencies": {
 		"auto-bind": "^5.0.1",
-		"chalk": "^5.3.0",
-		"electron-util": "^0.18.1",
-		"randoma": "^2.0.0",
+		"chalk": "^6.0.0",
+		"randoma": "^2.0.1",
 		"split2": "^4.2.0"
 	},
 	"devDependencies": {
-		"ava": "^6.1.2",
-		"delay": "^6.0.0",
-		"electron": "^30.0.1",
-		"spectron": "^19.0.0",
+		"electron": "^44.4.5",
 		"svg-term-cli": "^2.1.1",
-		"xo": "^0.58.0"
-	},
-	"xo": {
-		"envs": [
-			"node",
-			"browser"
-		]
+		"xo": "^5.0.1"
 	}
 }

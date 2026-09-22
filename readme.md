@@ -14,7 +14,7 @@ You can use this module directly in both the main and renderer process.
 npm install electron-timber
 ```
 
-*Requires Electron 30 or later.*
+*Requires Electron 44 or later.*
 
 ## Usage
 
@@ -29,7 +29,11 @@ let mainWindow;
 (async () => {
 	await app.whenReady();
 
-	mainWindow = new BrowserWindow();
+	mainWindow = new BrowserWindow({
+		webPreferences: {
+			nodeIntegration: true
+		}
+	});
 	await mainWindow.loadURL(…);
 
 	logger.log('Main log');
@@ -40,7 +44,7 @@ let mainWindow;
 })();
 ```
 
-Renderer process:
+Renderer process (requires `nodeIntegration: true` in `webPreferences`):
 
 ```js
 import logger from 'electron-timber';
@@ -49,13 +53,15 @@ logger.log('Renderer log');
 logger.error('Renderer error');
 ```
 
+No `preload` setup is needed. The module registers its own preload script via [`session.registerPreloadScript()`](https://www.electronjs.org/docs/latest/api/session#sesregisterpreloadscriptscript) to share defaults with renderers.
+
 ## API
 
-## logger
+### logger
 
 Logging will be prefixed with either `main` or `renderer` depending on where it comes from.
 
-Logs from the renderer process only show up if you have required `electron-timber` in the main process.
+Logs from the renderer process only show up if you have imported `electron-timber` in the main process.
 
 The methods are bound to the class instance, so you can do: `const log = logger.log; log('Foo');`.
 
@@ -71,11 +77,11 @@ Like `console.warn`.
 
 Like `console.error`.
 
-### time(label)
+### time(label?)
 
 Like `console.time`.
 
-### timeEnd(label)
+### timeEnd(label?)
 
 Like `console.timeEnd`.
 
@@ -109,33 +115,76 @@ Name of the logger. Used to prefix the log output. Don't use `main` or `renderer
 
 ##### ignore
 
-Type `RegExp`
+Type: `RegExp`
 
 Ignore lines matching the given regex.
 
 ##### logLevel
 
-Type: `string`
+Type: `string`\
+Default: `'info'` when `NODE_ENV` is `'development'`, otherwise `'warn'`
 
-Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only). Defaults to `info` during development and `warn` in production.
+Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only).
 
 ### getDefaults()
 
 Gets the default options (across `main` and `renderer` processes).
 
+Note: `logLevel` is returned in its internal numeric form.
+
 ### setDefaults(options?) <sup><small>*Main process only*</small></sup>
 
-Sets the default options (across `main` and `renderer` processes).
+Sets the default options (across `main` and `renderer` processes). Renderer windows are notified automatically.
+
+The `name` option is ignored.
 
 #### options
 
 Type: `object`
 
-Same as the `options` for `create()`.
+Same as the `options` for `create()` (except `name`).
+
+### hookConsole(options?)
+
+Hook console methods (`console.log`, `console.warn`, etc.) to use electron-timber instead.
+
+When called with no arguments, hooks the console in the current process. From the main process, pass `{renderer: true}` to also hook all current and future renderer consoles.
+
+Returns a function to unhook the console methods.
+
+#### options
+
+Type: `object`
+
+##### main
+
+Type: `boolean`\
+Default: `true` when called with no arguments from the main process
+
+Hook the console in the main process. Only applies in the main process.
+
+##### renderer
+
+Type: `boolean`\
+Default: `true` when called with no arguments from a renderer process, otherwise `false`
+
+Hook the console in renderer processes. Can be set from the main process to hook all renderers, or from a renderer to hook itself.
+
+```js
+const unhook = logger.hookConsole({
+	main: true,
+	renderer: true
+});
+
+// Later...
+unhook();
+```
+
+**Note:** Custom loggers created with `create()` do not have access to this method.
 
 ## Toggle loggers
 
-You can show the output of only a subset of the loggers using the environment variable `TIMBER_LOGGERS`. Here we show the output of the default `renderer` logger and a custom `unicorn` logger, but not the default `main` logger:
+You can show the output of only a subset of the loggers using the environment variable `TIMBER_LOGGERS`. It must be set before the module is imported. Here we show the output of the default `renderer` logger and a custom `unicorn` logger, but not the default `main` logger:
 
 ```sh
 TIMBER_LOGGERS=renderer,unicorn electron .
