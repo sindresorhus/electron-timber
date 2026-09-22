@@ -192,6 +192,14 @@ You can show the output of only a subset of the loggers using the environment va
 TIMBER_LOGGERS=renderer,unicorn electron .
 ```
 
+## Colors
+
+Colors are disabled when chalk detects that the output is not a TTY, which happens in some terminals and set-ups even though the output ends up somewhere that renders colors fine (Cmder/ConEmu, mintty, the VS Code debugger, Electron on Windows). Set `FORCE_COLOR=1` to force colors in that case:
+
+```sh
+FORCE_COLOR=1 electron .
+```
+
 ## Related
 
 - [electron-util](https://github.com/sindresorhus/electron-util) - Useful utilities for developing Electron apps and modules
