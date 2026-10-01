@@ -40,15 +40,11 @@ export const session = {
 
 export const ipcMain = {
 	listeners: new Map(),
-	handlers: new Map(),
 	listenerCount(channel) {
 		return (ipcMain.listeners.get(channel) ?? []).length;
 	},
 	on(channel, listener) {
 		ipcMain.listeners.set(channel, [...(ipcMain.listeners.get(channel) ?? []), listener]);
-	},
-	handle(channel, handler) {
-		ipcMain.handlers.set(channel, handler);
 	},
 };
 

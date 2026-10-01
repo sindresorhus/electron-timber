@@ -36,7 +36,7 @@
 		"index.js",
 		"index.d.ts",
 		"lib",
-		"preload.mjs"
+		"preload.cjs"
 	],
 	"keywords": [
 		"electron",

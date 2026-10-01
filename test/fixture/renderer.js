@@ -5,30 +5,43 @@ const test = (new URLSearchParams(globalThis.location.search)).get('test');
 const bridge = globalThis[bridgeNamespace];
 
 // Run different code for different tests
-if (test === 'hookConsole') {
-	let unhook = logger.hookConsole();
-	console.log('Renderer log console');
-	console.warn('Renderer warn console');
-	unhook();
-	console.log('Renderer log console');
-	console.warn('Renderer warn console');
+switch (test) {
+	case 'hookConsole': {
+		let unhook = logger.hookConsole();
+		console.log('Renderer log console');
+		console.warn('Renderer warn console');
+		unhook();
+		console.log('Renderer log console');
+		console.warn('Renderer warn console');
 
-	unhook = logger.hookConsole();
-	console.error('Renderer error console');
-	console.time('Renderer timer console');
-	console.timeEnd('Renderer timer console');
-	unhook();
-	console.error('Renderer error console');
-	console.time('Renderer timer console');
-	console.timeEnd('Renderer timer console');
-} else if (test === 'logLevel') {
-	bridge?.on('logger', (method, ...arguments_) => {
-		logger[method](...arguments_);
-	});
-} else {
-	logger.log('Renderer log');
-	logger.warn('Renderer warn');
-	logger.error('Renderer error');
-	logger.time('Renderer timer');
-	logger.timeEnd('Renderer timer');
+		unhook = logger.hookConsole();
+		console.error('Renderer error console');
+		console.time('Renderer timer console');
+		console.timeEnd('Renderer timer console');
+		unhook();
+		console.error('Renderer error console');
+		console.time('Renderer timer console');
+		console.timeEnd('Renderer timer console');
+		break;
+	}
+
+	case 'defaults': {
+		logger.log('Renderer defaults', JSON.stringify(logger.getDefaults()));
+		break;
+	}
+
+	case 'logLevel': {
+		bridge?.on('logger', (method, ...arguments_) => {
+			logger[method](...arguments_);
+		});
+		break;
+	}
+
+	default: {
+		logger.log('Renderer log');
+		logger.warn('Renderer warn');
+		logger.error('Renderer error');
+		logger.time('Renderer timer');
+		logger.timeEnd('Renderer timer');
+	}
 }

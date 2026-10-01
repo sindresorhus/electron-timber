@@ -29,11 +29,7 @@ let mainWindow;
 (async () => {
 	await app.whenReady();
 
-	mainWindow = new BrowserWindow({
-		webPreferences: {
-			nodeIntegration: true
-		}
-	});
+	mainWindow = new BrowserWindow();
 	await mainWindow.loadURL(…);
 
 	logger.log('Main log');

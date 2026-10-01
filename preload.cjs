@@ -1,19 +1,18 @@
-// The preload runs in a sandboxed context without access to `node:` imports,
-// so only `electron` and relative imports are allowed here. Use the global
-// `process` instead of `import process from 'node:process'`.
-import {contextBridge, ipcRenderer} from 'electron';
-import {
-	defaultsNamespace,
-	bridgeNamespace,
-	defaultsRequestChannel,
-	defaultsUpdatedChannel,
-	updateChannel,
-} from './lib/common.js';
+// The preload runs sandboxed by default (`sandbox: true` since Electron 20). Sandboxed preloads run as plain CommonJS without an ESM context, and their `require` only resolves `electron` and a few Node.js built-ins, not relative files. So this file must stay a single self-contained CommonJS file. Use the free `process` variable instead of `require('node:process')`.
+/* eslint-disable unicorn/no-global-object-property-assignment -- Sharing values with the renderer through globals is the job of this preload. */
+const {contextBridge, ipcRenderer} = require('electron');
+
+// Must match `lib/common.js`.
+const defaultsNamespace = '__ELECTRON_TIMBER_DEFAULTS__';
+const bridgeNamespace = '__ELECTRON_TIMBER_BRIDGE__';
+const defaultsRequestChannel = 'timber-get-defaults';
+const defaultsUpdatedChannel = 'timber-defaults-updated';
+const updateChannel = '__ELECTRON_TIMBER_UPDATE__';
 
 // Fetch the current defaults set via `setDefaults()` in the main process.
 // The preload runs before any renderer code, so the exposed defaults are ready
-// when the renderer logger loads.
-const defaults = await ipcRenderer.invoke(defaultsRequestChannel);
+// when the renderer logger loads. It must be synchronous, as CommonJS has no top-level await.
+const defaults = ipcRenderer.sendSync(defaultsRequestChannel);
 
 // Generic IPC bridge for renderers loaded as plain ESM (`<script type="module">`),
 // where bare specifiers like `import … from 'electron'` do not resolve even with
@@ -33,8 +32,9 @@ const bridge = {
 // `globalThis` here would only be visible in the isolated preload world, so
 // expose the values to the main world instead.
 try {
-	// eslint-disable-next-line n/prefer-global/process -- The preload is sandboxed and cannot use `node:` imports.
-	if (globalThis.process?.contextIsolated) {
+	// The sandboxed preload gets `process` as a wrapper parameter, not as `globalThis.process`.
+	// eslint-disable-next-line n/prefer-global/process -- The sandboxed preload cannot require `node:process`.
+	if (process.contextIsolated) {
 		contextBridge.exposeInMainWorld(defaultsNamespace, defaults);
 		contextBridge.exposeInMainWorld(bridgeNamespace, bridge);
 	} else {
