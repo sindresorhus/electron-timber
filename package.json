@@ -28,7 +28,7 @@
 		"node": ">=22.12"
 	},
 	"scripts": {
-		"test": "xo && node --test test/*.test.js",
+		"test": "xo && tsd && node --test test/*.test.js",
 		"start": "electron test/fixture",
 		"make-screenshot": "svg-term --at=2000 --command=\"electron test/fixture\" --out=screenshot.svg --window --no-cursor --height=8"
 	},
@@ -62,8 +62,10 @@
 		"split2": "^4.2.0"
 	},
 	"devDependencies": {
+		"@types/node": "^26.6.3",
 		"electron": "^44.4.5",
 		"svg-term-cli": "^2.1.1",
+		"tsd": "^0.33.0",
 		"xo": "^5.0.1"
 	}
 }

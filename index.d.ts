@@ -18,7 +18,7 @@ export type TimberOptions = {
 
 	 Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only).
 
-	 Defaults to `info` when `NODE_ENV` is `development` and `warn` otherwise.
+	 Default: `'info'` when `NODE_ENV` is `'development'`, otherwise `'warn'`.
 	 */
 	readonly logLevel?: LogLevelName;
 };
@@ -41,7 +41,7 @@ export type HookConsoleOptions = {
 
 	 Only applies when called from the main process.
 
-	 When `hookConsole()` is called with no arguments from the main process, the main console is hooked.
+	 Default: `true` when `hookConsole()` is called with no arguments from the main process, otherwise `false`.
 	 */
 	readonly main?: boolean;
 
@@ -50,9 +50,7 @@ export type HookConsoleOptions = {
 
 	 Can be set from the main process to hook all current and future renderers, or from a renderer to hook itself.
 
-	 When `hookConsole()` is called with no arguments from a renderer process, the renderer console is hooked.
-
-	 @default false
+	 Default: `true` when `hookConsole()` is called with no arguments from a renderer process, otherwise `false`.
 	 */
 	readonly renderer?: boolean;
 };
@@ -88,13 +86,17 @@ declare class Timber {
 	 Start a timer.
 
 	 Like `console.time`.
+
+	 @param label - Timer label. Default: `'default'`.
 	 */
 	time(label?: string): void;
 
 	/**
 	 End a timer.
 
-	 Like `console.timeEnd`.
+	 Like `console.timeEnd`. Does nothing when no timer with the label is running.
+
+	 @param label - Timer label. Default: `'default'`.
 	 */
 	timeEnd(label?: string): void;
 
@@ -129,22 +131,42 @@ declare class Timber {
 	 You should initialize this on module load so prefix padding is consistent with the other loggers.
 
 	 Custom loggers do not have the `hookConsole()` method. Call it on the default export instead.
+
+	 @example
+	 ```
+	 import logger from 'electron-timber';
+
+	 const log = logger.create({name: 'unicorn'});
+
+	 log.log('Hello from the unicorn logger');
+	 ```
 	 */
 	create(options?: TimberOptions): Timber;
 
 	/**
 	 Get the default options (across `main` and `renderer` processes).
+
+	 Note: `logLevel` is returned in its internal numeric form.
 	 */
 	getDefaults(): TimberDefaults;
 
 	/**
-	 Set the default options (across `main` and `renderer` processes).
+	 Set the default options (across `main` and `renderer` processes). Renderer windows are notified automatically.
 
 	 The `name` option is ignored.
 
 	 Note: This method can only be called from the main process. It throws when called from a renderer.
+
+	 @example
+	 ```
+	 import logger from 'electron-timber';
+
+	 logger.setDefaults({
+	   logLevel: 'error'
+	 });
+	 ```
 	 */
-	setDefaults(options: TimberOptions): void;
+	setDefaults(options?: Omit<TimberOptions, 'name'>): void;
 }
 
 declare class DefaultTimber extends Timber {
@@ -175,5 +197,7 @@ declare class DefaultTimber extends Timber {
 }
 
 declare const logger: DefaultTimber;
+
+export type {Timber, DefaultTimber};
 
 export default logger;

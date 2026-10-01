@@ -83,9 +83,19 @@ Like `console.error`.
 
 Like `console.time`.
 
+#### label
+
+Type: `string`\
+Default: `'default'`
+
 ### timeEnd(label?)
 
-Like `console.timeEnd`.
+Like `console.timeEnd`. Does nothing when no timer with the label is running.
+
+#### label
+
+Type: `string`\
+Default: `'default'`
 
 ### streamLog(stream)
 
@@ -130,15 +140,17 @@ Can be `info` (log everything), `warn` (log warnings and errors), or `error` (lo
 
 ### getDefaults()
 
-Gets the default options (across `main` and `renderer` processes).
+Get the default options (across `main` and `renderer` processes).
 
 Note: `logLevel` is returned in its internal numeric form.
 
 ### setDefaults(options?) <sup><small>*Main process only*</small></sup>
 
-Sets the default options (across `main` and `renderer` processes). Renderer windows are notified automatically.
+Set the default options (across `main` and `renderer` processes). Renderer windows are notified automatically.
 
 The `name` option is ignored.
+
+It throws when called from a renderer.
 
 #### options
 
@@ -161,7 +173,7 @@ Type: `object`
 ##### main
 
 Type: `boolean`\
-Default: `true` when called with no arguments from the main process
+Default: `true` when called with no arguments from the main process, otherwise `false`
 
 Hook the console in the main process. Only applies in the main process.
 
@@ -170,7 +182,7 @@ Hook the console in the main process. Only applies in the main process.
 Type: `boolean`\
 Default: `true` when called with no arguments from a renderer process, otherwise `false`
 
-Hook the console in renderer processes. Can be set from the main process to hook all renderers, or from a renderer to hook itself.
+Hook the console in renderer processes. Can be set from the main process to hook all current and future renderers, or from a renderer to hook itself.
 
 ```js
 const unhook = logger.hookConsole({
