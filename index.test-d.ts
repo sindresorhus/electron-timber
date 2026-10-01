@@ -40,7 +40,12 @@ expectError(logger.hookConsole({main: 'yes'}));
 expectError(logger.hookConsole({renderer: 'yes'}));
 expectError(logger.hookConsole({main: true, unknown: true}));
 
-const options: TimberOptions = {name: 'unicorn', logLevel: 'info', ignore: /debug/v};
+const options: TimberOptions = {
+	name: 'unicorn',
+	logLevel: 'info',
+	ignore: /debug/v,
+	timestamp: true,
+};
 const custom = logger.create(options);
 expectType<Timber>(custom);
 expectType<Timber>(logger.create());
@@ -56,6 +61,7 @@ expectType<boolean>(logger.getDefaults().shouldHookConsole);
 
 expectType<void>(logger.setDefaults());
 expectType<void>(logger.setDefaults({ignore: /debug/v, logLevel: 'warn'}));
+expectType<void>(logger.setDefaults({timestamp: true}));
 expectError(logger.setDefaults({logLevel: 'verbose'}));
 
 // `setDefaults()` ignores `name`, so the type does not accept it.
@@ -64,3 +70,4 @@ expectError(logger.setDefaults({name: 'unicorn'}));
 expectError(logger.create({logLevel: 'verbose'}));
 expectError(logger.create({name: 123}));
 expectError(logger.create({ignore: 'debug'}));
+expectError(logger.create({timestamp: 'yes'}));

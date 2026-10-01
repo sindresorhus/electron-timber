@@ -138,6 +138,19 @@ Default: `'info'` when `NODE_ENV` is `'development'`, otherwise `'warn'`
 
 Can be `info` (log everything), `warn` (log warnings and errors), or `error` (log errors only).
 
+##### timestamp
+
+Type: `boolean`\
+Default: `false`
+
+Prefix the output with the local time, for example `22:10:34 main › Log`.
+
+Only applies to the terminal output. Renderer logs are printed in the terminal by the main process, so use `setDefaults()` in the main process to add timestamps to them. In DevTools, use the “Show timestamps” setting instead.
+
+```js
+logger.setDefaults({timestamp: true});
+```
+
 ### getDefaults()
 
 Get the default options (across `main` and `renderer` processes).

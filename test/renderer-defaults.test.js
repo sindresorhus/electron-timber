@@ -9,11 +9,17 @@ test('renderer defaults match the shape the preload provides', () => {
 		ignore: undefined,
 		shouldHookConsole: false,
 		logLevel: logLevels.info,
+		timestamp: false,
 	});
 });
 
 test('renderer defaults set by the preload are read back', () => {
-	const defaults = {ignore: /debug/v, shouldHookConsole: true, logLevel: logLevels.error};
+	const defaults = {
+		ignore: /debug/v,
+		shouldHookConsole: true,
+		logLevel: logLevels.error,
+		timestamp: true,
+	};
 	globalThis[defaultsNamespace] = defaults;
 
 	try {

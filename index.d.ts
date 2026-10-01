@@ -21,6 +21,15 @@ export type TimberOptions = {
 	 Default: `'info'` when `NODE_ENV` is `'development'`, otherwise `'warn'`.
 	 */
 	readonly logLevel?: LogLevelName;
+
+	/**
+	 Prefix the output with the local time, for example `22:10:34 main › Log`.
+
+	 Only applies to the terminal output. Renderer logs are printed in the terminal by the main process, so use `setDefaults()` in the main process to add timestamps to them. In DevTools, use the “Show timestamps” setting instead.
+
+	 Default: `false`
+	 */
+	readonly timestamp?: boolean;
 };
 
 /**
@@ -33,6 +42,7 @@ export type TimberDefaults = {
 	readonly ignore: RegExp | undefined;
 	readonly shouldHookConsole: boolean;
 	readonly logLevel: number;
+	readonly timestamp: boolean;
 };
 
 export type HookConsoleOptions = {
