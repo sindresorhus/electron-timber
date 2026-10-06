@@ -28,7 +28,7 @@
 		"node": ">=22.12"
 	},
 	"scripts": {
-		"test": "xo && tsd && node --test test/*.test.js",
+		"test": "xo && tsd && install-electron && node --test test/*.test.js",
 		"start": "electron test/fixture",
 		"make-screenshot": "svg-term --at=2000 --command=\"electron test/fixture\" --out=screenshot.svg --window --no-cursor --height=8"
 	},
