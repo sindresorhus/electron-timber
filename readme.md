@@ -53,6 +53,8 @@ No `preload` setup is needed. The module registers its own preload script via [`
 
 Works with bundlers like Vite (including [electron-vite](https://electron-vite.org/)). The renderer entry is browser-only and never bundles Node.js or Electron main-process APIs, so `nodeIntegration` is not required. If your bundler needs it to be explicit, import `electron-timber/renderer` in the renderer and `electron-timber/main` in the main process.
 
+If you bundle the main process, webpack and rspack copy the preload script into the output automatically. Vite/Rollup and esbuild cannot do this, so mark `electron-timber` as external in the main process build. electron-vite already does this by default.
+
 ## API
 
 ### logger
