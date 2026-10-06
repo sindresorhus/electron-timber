@@ -175,6 +175,8 @@ Hook console methods (`console.log`, `console.warn`, etc.) to use electron-timbe
 
 When called with no arguments, hooks the console in the current process. From the main process, pass `{renderer: true}` to also hook all current and future renderer consoles.
 
+Electron security warnings are not sent to the terminal, as they are already visible in the DevTools console.
+
 Returns a function to unhook the console methods.
 
 #### options

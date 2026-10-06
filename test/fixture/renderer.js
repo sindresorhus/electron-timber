@@ -25,6 +25,13 @@ switch (test) {
 		break;
 	}
 
+	case 'securityWarning': {
+		// The console is hooked from the main process. This is how Electron logs its security warnings in the renderer.
+		console.warn('%cElectron Security Warning (Insecure Content-Security-Policy)', 'font-weight: bold;', 'This renderer process has no Content Security Policy set.');
+		console.warn('Renderer warn console');
+		break;
+	}
+
 	case 'defaults': {
 		logger.log('Renderer defaults', JSON.stringify(logger.getDefaults()));
 		break;

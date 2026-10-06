@@ -183,10 +183,11 @@ declare class DefaultTimber extends Timber {
 	/**
 	 Hook console methods (`console.log`, `console.warn`, etc.) to use electron-timber instead.
 
-	 When called with no arguments, hooks the console in the current process.
-	 From the main process, pass `{renderer: true}` to also hook all renderer consoles (including future windows).
+	 When called with no arguments, hooks the console in the current process. From the main process, pass `{renderer: true}` to also hook all current and future renderer consoles.
 
-	 Only available on the default export. Custom loggers created with `create()` do not have this method.
+	 Electron security warnings are not sent to the terminal, as they are already visible in the DevTools console.
+
+	 Note: Custom loggers created with `create()` do not have access to this method.
 
 	 @returns Function to unhook console methods.
 
