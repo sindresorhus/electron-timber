@@ -24,6 +24,10 @@ export class BrowserWindow {
 
 export const app = {
 	whenReady: () => Promise.resolve(),
+	// Tests that need it point it at a temporary directory with `t.mock.method()`.
+	getPath() {
+		throw new Error('`app.getPath()` is not stubbed');
+	},
 };
 
 export const session = {

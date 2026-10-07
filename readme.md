@@ -149,6 +149,39 @@ Only applies to the terminal output. Renderer logs are printed in the terminal b
 logger.setDefaults({timestamp: true});
 ```
 
+##### file
+
+Type: `boolean | string`\
+Default: `false`
+
+Also write the output to a file.
+
+Use `true` to write to `main.log` in [`app.getPath('logs')`](https://www.electronjs.org/docs/latest/api/app#appgetpathname) (for example, `~/Library/Logs/<app name>/main.log` on macOS), or a string with the absolute path to the file. The directory is created if it does not exist.
+
+The `logLevel`, `ignore`, and `TIMBER_LOGGERS` filters also apply to the file. Lines are written without colors and with a timestamp, for example `2026-10-07T20:10:34.123Z [warn] main › Something`. Lines are written synchronously, so the last lines before a crash are not lost.
+
+Only applies in the main process. Renderer logs are written by the main process, so use `setDefaults()` in the main process to also write them to the file.
+
+```js
+logger.setDefaults({file: true});
+```
+
+##### maxFileSize
+
+Type: `number`\
+Default: `1048576` (1 MB)
+
+The maximum size of the log file in bytes.
+
+When the file reaches this size, it is renamed with `.old` added to the name (for example, `main.old.log`), replacing the previous one, and a new file is started, so at most about twice this size is kept on disk. Set it to `0` to never rotate the file.
+
+```js
+logger.setDefaults({
+	file: true,
+	maxFileSize: 5 * 1024 * 1024
+});
+```
+
 ### getDefaults()
 
 Get the default options (across `main` and `renderer` processes).

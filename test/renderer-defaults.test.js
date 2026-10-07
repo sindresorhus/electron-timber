@@ -10,6 +10,8 @@ test('renderer defaults match the shape the preload provides', () => {
 		shouldHookConsole: false,
 		logLevel: logLevels.info,
 		timestamp: false,
+		file: false,
+		maxFileSize: 1024 * 1024,
 	});
 });
 

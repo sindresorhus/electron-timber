@@ -11,5 +11,5 @@ test('renderer logs reach the terminal from a sandboxed renderer', async t => {
 	const stdout = stripVTControlCharacters(rawStdout);
 
 	t.assert.match(stdout, /renderer › Renderer log/v);
-	t.assert.match(stdout, /renderer › Renderer defaults \{.*"logLevel":0,"timestamp":true\}/v);
+	t.assert.match(stdout, /renderer › Renderer defaults \{.*"logLevel":0,"timestamp":true,.*\}/v);
 });
